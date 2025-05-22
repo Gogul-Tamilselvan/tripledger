@@ -40,15 +40,20 @@ export function ExpenseTable({ expenses }: ExpenseTableProps) {
   };
 
   const getStatusBadge = (expense: Expense) => {
+    // Specific case: No initial amount owed, and it's settled (or was never there)
+    if (expense.totalAmountOwed === 0 && expense.outstandingBalance === 0) {
+      return <Badge variant="outline" className="text-muted-foreground">No Due</Badge>;
+    }
     if (expense.outstandingBalance < 0) {
       return <Badge variant="default" className="bg-blue-500 hover:bg-blue-600 text-white">Overpaid</Badge>;
     }
-    if (expense.outstandingBalance === 0) {
+    if (expense.outstandingBalance === 0) { // Covers cases where totalAmountOwed > 0 and it's fully paid
       return <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-white">Paid</Badge>;
     }
-    if (expense.amountPaid > 0) {
+    if (expense.amountPaid > 0) { // outstandingBalance > 0 here
       return <Badge variant="secondary" className="bg-yellow-400 hover:bg-yellow-500 text-black">Partial</Badge>;
     }
+    // outstandingBalance > 0 and amountPaid === 0
     return <Badge variant="destructive">Unpaid</Badge>;
   };
 
@@ -133,3 +138,4 @@ export function ExpenseTable({ expenses }: ExpenseTableProps) {
     </Card>
   );
 }
+
