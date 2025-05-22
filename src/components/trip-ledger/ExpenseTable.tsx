@@ -40,21 +40,26 @@ export function ExpenseTable({ expenses }: ExpenseTableProps) {
   };
 
   const getStatusBadge = (expense: Expense) => {
-    // Specific case: No initial amount owed, and it's settled (or was never there)
-    if (expense.totalAmountOwed === 0 && expense.outstandingBalance === 0) {
-      return <Badge variant="outline" className="text-muted-foreground">No Due</Badge>;
-    }
-    if (expense.outstandingBalance < 0) {
+    if (expense.outstandingBalance === 0) {
+      if (expense.totalAmountOwed === 0) {
+        // Case: No initial amount owed, and balance is zero.
+        return <Badge variant="outline" className="text-muted-foreground">No Due</Badge>;
+      } else {
+        // Case: Initial amount owed was > 0, and outstanding balance is now zero.
+        return <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-white">Paid</Badge>;
+      }
+    } else if (expense.outstandingBalance < 0) {
+      // Case: Overpaid, resulting in a credit balance.
       return <Badge variant="default" className="bg-blue-500 hover:bg-blue-600 text-white">Overpaid</Badge>;
+    } else { // outstandingBalance > 0
+      if (expense.amountPaid > 0) {
+        // Case: Partially paid, positive outstanding balance remains.
+        return <Badge variant="secondary" className="bg-yellow-400 hover:bg-yellow-500 text-black">Partial</Badge>;
+      } else {
+        // Case: Unpaid (amountPaid is 0 or less), positive outstanding balance remains.
+        return <Badge variant="destructive">Unpaid</Badge>;
+      }
     }
-    if (expense.outstandingBalance === 0) { // Covers cases where totalAmountOwed > 0 and it's fully paid
-      return <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-white">Paid</Badge>;
-    }
-    if (expense.amountPaid > 0) { // outstandingBalance > 0 here
-      return <Badge variant="secondary" className="bg-yellow-400 hover:bg-yellow-500 text-black">Partial</Badge>;
-    }
-    // outstandingBalance > 0 and amountPaid === 0
-    return <Badge variant="destructive">Unpaid</Badge>;
   };
 
   return (
@@ -138,4 +143,3 @@ export function ExpenseTable({ expenses }: ExpenseTableProps) {
     </Card>
   );
 }
-
