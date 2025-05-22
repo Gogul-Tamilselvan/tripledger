@@ -42,21 +42,29 @@ export function ExpenseTable({ expenses }: ExpenseTableProps) {
   const getStatusBadge = (expense: Expense) => {
     if (expense.outstandingBalance === 0) {
       if (expense.totalAmountOwed === 0) {
-        // Case: No initial amount owed, and balance is zero.
+        // Case: No initial amount owed for this transaction, and balance is zero.
         return <Badge variant="outline" className="text-muted-foreground">No Due</Badge>;
       } else {
-        // Case: Initial amount owed was > 0, and outstanding balance is now zero.
+        // Case: Initial amount owed for this transaction was > 0, and outstanding balance is now zero.
         return <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-white">Paid</Badge>;
       }
     } else if (expense.outstandingBalance < 0) {
-      // Case: Overpaid, resulting in a credit balance.
-      return <Badge variant="default" className="bg-blue-500 hover:bg-blue-600 text-white">Overpaid</Badge>;
+      // Case: Net credit for THIS transaction
+      if (expense.totalAmountOwed === 0) {
+        // This transaction was a payment/advance not against a new debt on this line, creating a credit specific to this line.
+        // e.g. Total Owed = 0, Amount Paid = 1000 => Outstanding = -1000
+        return <Badge variant="default" className="bg-sky-500 hover:bg-sky-600 text-white">Credit</Badge>;
+      } else {
+        // Total Owed on this line was > 0, and Amount Paid exceeded it.
+        // e.g. Total Owed = 1000, Amount Paid = 1500 => Outstanding = -500
+        return <Badge variant="default" className="bg-blue-500 hover:bg-blue-600 text-white">Overpaid</Badge>;
+      }
     } else { // outstandingBalance > 0
       if (expense.amountPaid > 0) {
-        // Case: Partially paid, positive outstanding balance remains.
+        // Case: Partially paid, positive outstanding balance remains for this transaction.
         return <Badge variant="secondary" className="bg-yellow-400 hover:bg-yellow-500 text-black">Partial</Badge>;
       } else {
-        // Case: Unpaid (amountPaid is 0 or less), positive outstanding balance remains.
+        // Case: Unpaid (amountPaid is 0 or less), positive outstanding balance remains for this transaction.
         return <Badge variant="destructive">Unpaid</Badge>;
       }
     }
@@ -143,3 +151,4 @@ export function ExpenseTable({ expenses }: ExpenseTableProps) {
     </Card>
   );
 }
+
