@@ -3,7 +3,7 @@
 
 import type * as React from "react";
 import { useState, useMemo, useEffect } from "react";
-import { Briefcase, Users, HandCoins, FileSpreadsheet, Settings } from "lucide-react";
+import { Briefcase, Users, HandCoins, Settings, Trash2, XIcon, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 
 import type { Expense } from "@/types/expense";
@@ -17,6 +17,19 @@ import { ExpenseSummary } from "@/components/trip-ledger/ExpenseSummary";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 
 // Sample initial data
@@ -38,13 +51,13 @@ const initialVendorsData: Vendor[] = [
 export default function TripLedgerPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
-  const [selectedVendorFilter, setSelectedVendorFilter] = useState<string>("all"); // For filtering expenses
+  const [selectedVendorFilter, setSelectedVendorFilter] = useState<string>("all");
   const [isClient, setIsClient] = useState(false);
   const [printDate, setPrintDate] = useState<string>("");
+  const { toast } = useToast();
 
   useEffect(() => {
     setIsClient(true);
-    // Load expenses
     const storedExpenses = localStorage.getItem("tripLedgerExpenses");
     if (storedExpenses) {
       try {
@@ -61,7 +74,6 @@ export default function TripLedgerPage() {
       setExpenses(initialExpensesData);
     }
 
-    // Load vendors
     const storedVendors = localStorage.getItem("tripLedgerVendors");
     if (storedVendors) {
       try {
@@ -97,14 +109,48 @@ export default function TripLedgerPage() {
     setExpenses((prevExpenses) => [...prevExpenses, fullExpense].sort((a,b) => b.date.getTime() - a.date.getTime()));
   };
 
+  const handleDeleteExpense = (expenseId: string) => {
+    setExpenses((prevExpenses) => prevExpenses.filter(exp => exp.id !== expenseId));
+    toast({
+      title: "Expense Deleted",
+      description: "The expense record has been removed.",
+      variant: "default",
+    });
+  };
+
   const handleAddVendor = (newVendor: Omit<Vendor, 'id'>) => {
+    const existingVendor = vendors.find(v => v.name.toLowerCase() === newVendor.name.toLowerCase());
+    if (existingVendor) {
+        toast({
+            title: "Vendor Exists",
+            description: `Vendor "${newVendor.name}" already exists.`,
+            variant: "destructive",
+        });
+        return;
+    }
     const fullVendor: Vendor = { ...newVendor, id: crypto.randomUUID() };
-    setVendors((prevVendors) => {
-      if (prevVendors.find(v => v.name.toLowerCase() === fullVendor.name.toLowerCase())) {
-        // Optionally, show a toast message here that vendor already exists
-        return prevVendors;
-      }
-      return [...prevVendors, fullVendor].sort((a,b) => a.name.localeCompare(b.name));
+    setVendors((prevVendors) => [...prevVendors, fullVendor].sort((a,b) => a.name.localeCompare(b.name)));
+  };
+
+  const handleDeleteVendor = (vendorId: string) => {
+    const vendorToDelete = vendors.find(v => v.id === vendorId);
+    if (!vendorToDelete) return;
+
+    const isVendorUsed = expenses.some(exp => exp.vendorName === vendorToDelete.name);
+    if (isVendorUsed) {
+      toast({
+        title: "Deletion Prevented",
+        description: `Vendor "${vendorToDelete.name}" cannot be deleted as it is associated with existing expenses.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setVendors((prevVendors) => prevVendors.filter(v => v.id !== vendorId));
+    toast({
+      title: "Vendor Deleted",
+      description: `Vendor "${vendorToDelete.name}" has been removed.`,
+      variant: "default",
     });
   };
   
@@ -132,8 +178,7 @@ export default function TripLedgerPage() {
 
   const handlePrint = () => {
     if (isClient) {
-      setPrintDate(format(new Date(), "PPPp")); // Set current date and time for printing
-      // Timeout to allow state to update before print dialog
+      setPrintDate(format(new Date(), "PPPp"));
       setTimeout(() => window.print(), 100);
     }
   };
@@ -181,7 +226,7 @@ export default function TripLedgerPage() {
                   <Users className="mr-2 h-6 w-6 text-primary" />
                   Manage Vendors
                 </CardTitle>
-                <CardDescription>Add new vendors to your list.</CardDescription>
+                <CardDescription>Add new vendors or remove unused ones.</CardDescription>
               </CardHeader>
               <CardContent>
                 <VendorForm onAddVendor={handleAddVendor} />
@@ -189,11 +234,43 @@ export default function TripLedgerPage() {
                   <>
                     <Separator className="my-4" />
                     <h3 className="text-sm font-medium text-muted-foreground mb-3">Existing Vendors:</h3>
-                    <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
+                    <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto p-1">
                       {vendors.map(vendor => (
-                        <Badge key={vendor.id} variant="secondary" className="py-1 px-3 text-sm">
-                          {vendor.name}
-                        </Badge>
+                        <AlertDialog key={vendor.id}>
+                          <div className="flex items-center bg-secondary rounded-full pr-1 group">
+                            <Badge variant="secondary" className="py-1 px-3 text-sm rounded-r-none group-hover:bg-secondary/80 transition-colors">
+                              {vendor.name}
+                            </Badge>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-destructive/20 group-hover:opacity-100 opacity-70 transition-opacity">
+                                <XIcon className="h-3 w-3 text-destructive/80 group-hover:text-destructive" />
+                                <span className="sr-only">Delete {vendor.name}</span>
+                              </Button>
+                            </AlertDialogTrigger>
+                          </div>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle className="flex items-center">
+                                <AlertTriangle className="h-5 w-5 mr-2 text-destructive" />
+                                Confirm Deletion
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete the vendor "{vendor.name}"? This action cannot be undone.
+                                <br/>
+                                <span className="text-xs text-muted-foreground"> (Note: Vendors associated with expenses cannot be deleted.)</span>
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteVendor(vendor.id)}
+                                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                              >
+                                Delete Vendor
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       ))}
                     </div>
                   </>
@@ -223,7 +300,6 @@ export default function TripLedgerPage() {
           </CardContent>
         </Card>
         
-        {/* Printable Area */}
         <div className="printable-area">
            <div className="print-header-logo hidden print:block">
               <svg viewBox="0 0 24 24" className="mx-auto" style={{width: '80px', height: 'auto'}} fill="currentColor">
@@ -244,8 +320,8 @@ export default function TripLedgerPage() {
             totalPaid={summary.totalPaid}
             totalOutstanding={summary.totalOutstanding}
           />
-          <div className="mt-6"> {/* Add margin for print layout */}
-            <ExpenseTable expenses={filteredExpenses} />
+          <div className="mt-6">
+            <ExpenseTable expenses={filteredExpenses} onDeleteExpense={handleDeleteExpense} />
           </div>
           <div className="print-footer hidden print:block">
             ProLedger - Your Professional Expense Tracking Solution
@@ -255,3 +331,5 @@ export default function TripLedgerPage() {
     </div>
   );
 }
+
+    
