@@ -2,7 +2,8 @@
 import type {Metadata} from 'next';
 import { Inter, Roboto_Mono } from 'next/font/google';
 import './globals.css';
-import { Toaster } from "@/components/ui/toaster"
+import { Toaster } from "@/components/ui/toaster";
+import { AuthProvider } from '@/contexts/AuthContext'; // Added AuthProvider
 
 const inter = Inter({
   variable: '--font-inter',
@@ -27,8 +28,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${robotoMono.variable} antialiased`}>
-        {children}
-        <Toaster />
+        <AuthProvider> {/* Wrapped children with AuthProvider */}
+          {children}
+          <Toaster />
+        </AuthProvider>
       </body>
     </html>
   );
