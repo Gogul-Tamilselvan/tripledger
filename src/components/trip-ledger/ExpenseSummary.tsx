@@ -2,8 +2,9 @@
 "use client";
 
 import type * as React from "react";
-import { Landmark, TrendingUp, TrendingDown } from "lucide-react";
+import { Landmark, TrendingUp, TrendingDown, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 interface ExpenseSummaryProps {
   totalPaid: number;
@@ -15,10 +16,29 @@ export function ExpenseSummary({ totalPaid, totalOutstanding }: ExpenseSummaryPr
     return new Intl.NumberFormat("en-IN", {
       style: "currency",
       currency: "INR",
-      minimumFractionDigits: 0, // Changed to 0 for cleaner look, can be 2 if cents are needed
+      minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
   };
+
+  const isCreditBalance = totalOutstanding < 0;
+  const isZeroBalance = totalOutstanding === 0;
+
+  let outstandingIcon = <TrendingDown className="mr-2 h-5 w-5 text-red-600 dark:text-red-500" />;
+  let outstandingLabel = "Total Outstanding Balance:";
+  let outstandingAmount = formatCurrency(totalOutstanding);
+  let outstandingColorClass = "text-red-600 dark:text-red-500";
+
+  if (isCreditBalance) {
+    outstandingIcon = <TrendingUp className="mr-2 h-5 w-5 text-green-600 dark:text-green-500" />;
+    outstandingLabel = "Total Credit Balance:";
+    outstandingAmount = formatCurrency(Math.abs(totalOutstanding));
+    outstandingColorClass = "text-green-600 dark:text-green-500";
+  } else if (isZeroBalance) {
+    outstandingIcon = <CheckCircle2 className="mr-2 h-5 w-5 text-muted-foreground" />; // Neutral color
+    outstandingColorClass = "text-muted-foreground";
+  }
+
 
   return (
     <Card className="print-summary shadow-md">
@@ -39,10 +59,10 @@ export function ExpenseSummary({ totalPaid, totalOutstanding }: ExpenseSummaryPr
         </div>
         <div className="flex justify-between items-center p-3 bg-secondary/30 rounded-md">
           <div className="flex items-center">
-            <TrendingDown className="mr-2 h-5 w-5 text-red-600 dark:text-red-500" />
-            <span className="text-muted-foreground">Total Outstanding Balance:</span>
+            {outstandingIcon}
+            <span className="text-muted-foreground">{outstandingLabel}</span>
           </div>
-          <span className="font-semibold text-lg text-red-600 dark:text-red-500">{formatCurrency(totalOutstanding)}</span>
+          <span className={cn("font-semibold text-lg", outstandingColorClass)}>{outstandingAmount}</span>
         </div>
       </CardContent>
     </Card>

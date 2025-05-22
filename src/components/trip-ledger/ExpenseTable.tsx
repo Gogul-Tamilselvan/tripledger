@@ -23,6 +23,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { cn } from "@/lib/utils";
 
 interface ExpenseTableProps {
   expenses: Expense[];
@@ -36,6 +37,19 @@ export function ExpenseTable({ expenses }: ExpenseTableProps) {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
+  };
+
+  const getStatusBadge = (expense: Expense) => {
+    if (expense.outstandingBalance < 0) {
+      return <Badge variant="default" className="bg-blue-500 hover:bg-blue-600 text-white">Overpaid</Badge>;
+    }
+    if (expense.outstandingBalance === 0) {
+      return <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-white">Paid</Badge>;
+    }
+    if (expense.amountPaid > 0) {
+      return <Badge variant="secondary" className="bg-yellow-400 hover:bg-yellow-500 text-black">Partial</Badge>;
+    }
+    return <Badge variant="destructive">Unpaid</Badge>;
   };
 
   return (
@@ -66,7 +80,7 @@ export function ExpenseTable({ expenses }: ExpenseTableProps) {
                   <TableHead className="text-right w-[130px]">Total Owed</TableHead>
                   <TableHead className="text-right w-[130px]">Amount Paid</TableHead>
                   <TableHead className="text-right w-[130px]">Outstanding</TableHead>
-                  <TableHead className="text-center w-[80px] no-print">Status</TableHead>
+                  <TableHead className="text-center w-[100px] no-print">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -97,17 +111,16 @@ export function ExpenseTable({ expenses }: ExpenseTableProps) {
                     </TableCell>
                     <TableCell className="text-right print:text-right">{formatCurrency(expense.totalAmountOwed)}</TableCell>
                     <TableCell className="text-right print:text-right text-green-600 dark:text-green-500">{formatCurrency(expense.amountPaid)}</TableCell>
-                    <TableCell className="text-right print:text-right font-semibold text-red-600 dark:text-red-500">
+                    <TableCell className={cn(
+                        "text-right print:text-right font-semibold",
+                        expense.outstandingBalance > 0 && "text-red-600 dark:text-red-500",
+                        expense.outstandingBalance < 0 && "text-green-600 dark:text-green-500"
+                        // If 0, it will use default text color
+                      )}>
                       {formatCurrency(expense.outstandingBalance)}
                     </TableCell>
                     <TableCell className="text-center no-print">
-                      {expense.outstandingBalance === 0 ? (
-                        <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-white">Paid</Badge>
-                      ) : expense.amountPaid > 0 ? (
-                        <Badge variant="secondary" className="bg-yellow-400 hover:bg-yellow-500 text-black">Partial</Badge>
-                      ) : (
-                        <Badge variant="destructive">Unpaid</Badge>
-                      )}
+                      {getStatusBadge(expense)}
                     </TableCell>
                   </TableRow>
                 ))}

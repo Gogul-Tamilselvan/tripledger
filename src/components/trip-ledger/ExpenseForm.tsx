@@ -43,10 +43,8 @@ const formSchema = z.object({
   description: z.string().max(100, "Description can be up to 100 characters.").optional(),
   totalAmountOwed: z.coerce.number().min(0, { message: "Total amount must be non-negative." }),
   amountPaid: z.coerce.number().min(0, { message: "Amount paid must be non-negative." }),
-}).refine(data => data.amountPaid <= data.totalAmountOwed, {
-  message: "Amount paid cannot exceed total amount owed.",
-  path: ["amountPaid"],
 });
+// Removed .refine(data => data.amountPaid <= data.totalAmountOwed) to allow overpayments
 
 type ExpenseFormValues = z.infer<typeof formSchema>;
 
