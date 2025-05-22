@@ -112,76 +112,82 @@ body {
 
 /* Enhanced Print Styles */
 @media print {
-  body {
-    font-family: Arial, Helvetica, sans-serif; /* Standard print font */
-    font-size: 10pt;
-    color: #000; /* Black text for print */
-    background-color: #fff; /* White background for print */
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background-color: #fff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
+
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 10pt;
+    color: #000 !important;
+  }
+
+  /* Hide ALL descendants of body by default */
   body * {
-    visibility: hidden;
-    color: #000 !important; /* Ensure all printable text is black */
-    background-color: transparent !important; /* Remove backgrounds for print */
+    visibility: hidden !important;
+    color: #000 !important; 
+    background-color: transparent !important;
     box-shadow: none !important;
     text-shadow: none !important;
   }
+
+  /* Make .printable-area and its descendants visible */
   .printable-area, .printable-area * {
-    visibility: visible;
+    visibility: visible !important;
   }
+  
+  /* Style the .printable-area to take over the page */
   .printable-area {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    margin: 0;
-    padding: 20px; /* Add some padding to the print area */
-    box-sizing: border-box;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    min-height: 100vh; /* Fill at least one page */
+    margin: 0 !important;
+    padding: 20mm 15mm !important; /* Standard A4 margins */
+    box-sizing: border-box !important;
+    background-color: #fff !important;
   }
+
+  /* Elements explicitly marked as no-print */
   .no-print {
     display: none !important;
   }
-  .print-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 9pt !important;
-    margin-top: 15px;
+
+  /* Hide Radix UI ToastViewport specifically */
+  div[data-radix-toast-viewport-width] {
+      display: none !important;
   }
-  .print-table th, .print-table td {
-    border: 1px solid #666 !important; /* Darker gray border for print */
-    padding: 6px 8px !important;
-    text-align: left;
-  }
-  .print-table th {
-    background-color: #f0f0f0 !important; /* Light gray header for table */
-    font-weight: bold;
-  }
-  .print-table td.text-right {
-    text-align: right;
-  }
-  .print-table .text-green-600 { /* Example: if you still use these for specific semantics */
-    color: #006400 !important; /* Dark Green */
-  }
-  .print-table .text-red-600 {
-     color: #8B0000 !important; /* Dark Red */
+
+  /* Page setup */
+  @page {
+    size: A4 portrait;
+    margin: 0; /* Margins are handled by .printable-area padding */
   }
 
   .print-header-logo {
-    display: block;
+    display: block !important;
     text-align: center;
     margin-bottom: 20px;
   }
-  .print-header-logo svg { /* Style for placeholder logo */
-    width: 100px;
+  .print-header-logo svg { 
+    width: 80px; /* Adjusted size */
     height: auto;
-    fill: #333;
+    fill: #333 !important;
   }
   .print-statement-title {
+    display: block !important;
     font-size: 18pt !important;
     font-weight: bold;
     text-align: center;
     margin-bottom: 10px !important;
   }
   .print-statement-subtitle {
+    display: block !important;
     font-size: 11pt !important;
     text-align: center;
     margin-bottom: 20px !important;
@@ -190,27 +196,47 @@ body {
   .print-summary {
     margin-top: 20px !important;
     font-size: 10pt !important;
-    border-top: 1px solid #ccc;
+    border-top: 1px solid #ccc !important;
     padding-top: 10px;
   }
   .print-summary > div {
     margin-bottom: 5px;
   }
+  .print-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt !important;
+    margin-top: 15px;
+  }
+  .print-table th, .print-table td {
+    border: 1px solid #666 !important; 
+    padding: 6px 8px !important;
+    text-align: left;
+  }
+  .print-table th {
+    background-color: #f0f0f0 !important; 
+    font-weight: bold;
+  }
+  .print-table td.text-right {
+    text-align: right !important;
+  }
+  .print-table .text-green-600 { 
+    color: #006400 !important; /* Dark Green */
+  }
+  .print-table .text-red-600 {
+     color: #8B0000 !important; /* Dark Red */
+  }
+
   .print-footer {
-    display: block !important; /* Ensure footer is visible for print */
-    position: fixed;
-    bottom: 10px;
-    left: 20px;
-    right: 20px;
+    display: block !important; 
+    position: fixed; /* Note: This may only appear correctly on the "last page" if content overflows */
+    bottom: 10mm; /* Adjusted to be within typical printer bottom margin */
+    left: 15mm; /* Align with .printable-area padding */
+    right: 15mm; /* Align with .printable-area padding */
     text-align: center;
     font-size: 8pt;
     color: #777 !important;
-    border-top: 1px solid #ccc;
+    border-top: 1px solid #ccc !important;
     padding-top: 5px;
-  }
-
-  @page {
-    size: A4 portrait; /* Common page size */
-    margin: 20mm 15mm; /* Standard margins */
   }
 }
