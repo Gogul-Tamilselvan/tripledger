@@ -16,6 +16,7 @@ import { ExpenseTable } from "@/components/trip-ledger/ExpenseTable";
 import { ExpenseSummary } from "@/components/trip-ledger/ExpenseSummary";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 
 
 // Sample initial data
@@ -187,10 +188,14 @@ export default function TripLedgerPage() {
                 {vendors.length > 0 && (
                   <>
                     <Separator className="my-4" />
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">Existing Vendors:</h3>
-                    <ul className="text-sm text-foreground list-disc list-inside max-h-40 overflow-y-auto">
-                      {vendors.map(vendor => <li key={vendor.id}>{vendor.name}</li>)}
-                    </ul>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-3">Existing Vendors:</h3>
+                    <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
+                      {vendors.map(vendor => (
+                        <Badge key={vendor.id} variant="secondary" className="py-1 px-3 text-sm">
+                          {vendor.name}
+                        </Badge>
+                      ))}
+                    </div>
                   </>
                 )}
               </CardContent>
