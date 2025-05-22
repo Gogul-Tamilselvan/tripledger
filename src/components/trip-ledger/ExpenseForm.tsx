@@ -1,10 +1,11 @@
+
 "use client";
 
 import type * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { CalendarIcon, PlusCircle } from "lucide-react";
+import { CalendarIcon, PlusCircle, Edit3 } from "lucide-react";
 import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Popover,
   PopoverContent,
@@ -25,11 +34,13 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import type { Expense } from "@/types/expense";
+import type { Vendor } from "@/types/vendor";
 import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
-  vendorName: z.string().min(1, { message: "Vendor name is required." }),
+  vendorName: z.string().min(1, { message: "Vendor selection is required." }),
   date: z.date({ required_error: "Expense date is required." }),
+  description: z.string().max(100, "Description can be up to 100 characters.").optional(),
   totalAmountOwed: z.coerce.number().min(0, { message: "Total amount must be non-negative." }),
   amountPaid: z.coerce.number().min(0, { message: "Amount paid must be non-negative." }),
 }).refine(data => data.amountPaid <= data.totalAmountOwed, {
@@ -40,36 +51,37 @@ const formSchema = z.object({
 type ExpenseFormValues = z.infer<typeof formSchema>;
 
 interface ExpenseFormProps {
-  onAddExpense: (expense: Expense) => void;
+  onAddExpense: (expense: Omit<Expense, 'id' | 'outstandingBalance'>) => void;
+  vendors: Vendor[];
 }
 
-export function ExpenseForm({ onAddExpense }: ExpenseFormProps) {
+export function ExpenseForm({ onAddExpense, vendors }: ExpenseFormProps) {
   const { toast } = useToast();
   const form = useForm<ExpenseFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       vendorName: "",
       date: new Date(),
+      description: "",
       totalAmountOwed: 0,
       amountPaid: 0,
     },
   });
 
   function onSubmit(values: ExpenseFormValues) {
-    const newExpense: Expense = {
-      id: crypto.randomUUID(),
-      vendorName: values.vendorName,
-      date: values.date,
-      totalAmountOwed: values.totalAmountOwed,
-      amountPaid: values.amountPaid,
-      outstandingBalance: values.totalAmountOwed - values.amountPaid,
-    };
-    onAddExpense(newExpense);
+    onAddExpense(values); // id and outstandingBalance handled in parent
     toast({
       title: "Expense Added",
       description: `${values.vendorName} expense recorded successfully.`,
+      variant: "default",
     });
-    form.reset();
+    form.reset({ // Reset with specific default values
+        vendorName: "", 
+        date: new Date(), 
+        description: "", 
+        totalAmountOwed: 0, 
+        amountPaid: 0
+    });
   }
 
   return (
@@ -82,9 +94,21 @@ export function ExpenseForm({ onAddExpense }: ExpenseFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Vendor Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g., Manali Travels" {...field} />
-                </FormControl>
+                <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a vendor" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {vendors.length === 0 && <SelectItem value="" disabled>No vendors available. Add one first.</SelectItem>}
+                    {vendors.map((vendor) => (
+                      <SelectItem key={vendor.id} value={vendor.name}>
+                        {vendor.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
@@ -130,6 +154,23 @@ export function ExpenseForm({ onAddExpense }: ExpenseFormProps) {
               </FormItem>
             )}
           />
+        </div>
+        
+        <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description (Optional)</FormLabel>
+                <FormControl>
+                  <Textarea placeholder="e.g., Hotel booking, Flight tickets" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
             control={form.control}
             name="totalAmountOwed"

@@ -1,101 +1,103 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 body {
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), Arial, Helvetica, sans-serif;
 }
 
 @layer base {
   :root {
-    --background: 0 0% 96.1%; /* Light Gray #F5F5F5 */
-    --foreground: 222.2 84% 4.9%; /* Dark text for contrast */
+    /* New Professional Theme: Slate & Steel Blue with Amber Accent */
+    --background: 220 20% 97%; /* Lighter Slate Gray */
+    --foreground: 220 15% 25%; /* Darker Slate Gray */
 
     --card: 0 0% 100%; /* White cards */
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 220 15% 25%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 220 15% 25%;
 
-    --primary: 217 89% 61%; /* Vivid Blue #4285F4 */
+    --primary: 210 70% 55%; /* Steel Blue */
     --primary-foreground: 0 0% 100%; /* White text on blue */
 
-    --secondary: 210 40% 90%; /* Lighter gray for secondary elements */
-    --secondary-foreground: 222.2 84% 4.9%;
+    --secondary: 220 15% 90%; /* Light Slate Gray for secondary elements */
+    --secondary-foreground: 220 15% 25%;
 
-    --muted: 210 40% 92%; /* Adjusted muted for better harmony */
-    --muted-foreground: 215.4 16.3% 50%; /* Adjusted muted foreground */
+    --muted: 220 15% 93%; /* Adjusted muted for better harmony */
+    --muted-foreground: 220 10% 45%; /* Adjusted muted foreground */
 
-    --accent: 16 100% 63.1%; /* Energetic Orange #FF7043 */
-    --accent-foreground: 0 0% 100%; /* White text on orange */
+    --accent: 35 90% 60%; /* Soft Amber/Orange */
+    --accent-foreground: 220 15% 15%; /* Dark text on accent */
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 70% 55%; /* Softer Red */
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 88%; /* Slightly darker border for definition */
-    --input: 214.3 31.8% 88%; /* Matching input border */
-    --ring: 217 89% 61%; /* Primary blue for focus rings */
+    --border: 220 15% 85%; /* Softer border */
+    --input: 220 15% 88%; /* Matching input border */
+    --ring: 210 70% 55%; /* Primary blue for focus rings */
 
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --chart-1: 210 70% 55%; /* Steel Blue */
+    --chart-2: 35 90% 60%;  /* Soft Amber */
+    --chart-3: 180 50% 45%; /* Teal */
+    --chart-4: 260 60% 65%; /* Lavender */
+    --chart-5: 0 0% 50%;    /* Medium Gray */
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 220 15% 98%;
+    --sidebar-foreground: 220 10% 20%;
+    --sidebar-primary: 210 70% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 15% 92%;
+    --sidebar-accent-foreground: 220 10% 15%;
+    --sidebar-border: 220 15% 88%;
+    --sidebar-ring: 210 70% 55%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 220 15% 10%; /* Dark Slate */
+    --foreground: 220 10% 90%; /* Light Gray text */
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 220 15% 15%; /* Darker Card */
+    --card-foreground: 220 10% 90%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 220 15% 15%;
+    --popover-foreground: 220 10% 90%;
 
-    --primary: 217 89% 61%; /* Vivid Blue #4285F4 */
-    --primary-foreground: 0 0% 100%; /* White text on blue */
+    --primary: 210 70% 60%; /* Slightly brighter Steel Blue for dark mode */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 220 15% 25%; /* Darker Secondary */
+    --secondary-foreground: 220 10% 90%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 220 15% 22%;
+    --muted-foreground: 220 10% 65%;
 
-    --accent: 16 100% 63.1%; /* Energetic Orange #FF7043 */
-    --accent-foreground: 0 0% 100%; /* White text on orange */
+    --accent: 35 90% 65%; /* Brighter Amber for dark mode */
+    --accent-foreground: 220 15% 10%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 70% 60%; /* Brighter Red */
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 217 89% 61%; /* Primary blue for focus rings */
+    --border: 220 15% 30%;
+    --input: 220 15% 30%;
+    --ring: 210 70% 60%;
 
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --chart-1: 210 70% 60%;
+    --chart-2: 35 90% 65%;
+    --chart-3: 180 50% 50%;
+    --chart-4: 260 60% 70%;
+    --chart-5: 0 0% 60%;
 
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-background: 220 15% 12%;
+    --sidebar-foreground: 220 10% 88%;
+    --sidebar-primary: 210 70% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 220 15% 20%;
+    --sidebar-accent-foreground: 220 10% 90%;
+    --sidebar-border: 220 15% 25%;
+    --sidebar-ring: 210 70% 60%;
   }
 }
 
@@ -108,9 +110,20 @@ body {
   }
 }
 
+/* Enhanced Print Styles */
 @media print {
+  body {
+    font-family: Arial, Helvetica, sans-serif; /* Standard print font */
+    font-size: 10pt;
+    color: #000; /* Black text for print */
+    background-color: #fff; /* White background for print */
+  }
   body * {
     visibility: hidden;
+    color: #000 !important; /* Ensure all printable text is black */
+    background-color: transparent !important; /* Remove backgrounds for print */
+    box-shadow: none !important;
+    text-shadow: none !important;
   }
   .printable-area, .printable-area * {
     visibility: visible;
@@ -121,29 +134,83 @@ body {
     top: 0;
     width: 100%;
     margin: 0;
-    padding: 0;
+    padding: 20px; /* Add some padding to the print area */
+    box-sizing: border-box;
   }
   .no-print {
     display: none !important;
   }
-  .print-table td, .print-table th {
-    border: 1px solid hsl(var(--foreground) / 0.2) !important; /* Light border for print */
-    padding: 4px !important;
-  }
   .print-table {
-    font-size: 10pt !important;
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt !important;
+    margin-top: 15px;
+  }
+  .print-table th, .print-table td {
+    border: 1px solid #666 !important; /* Darker gray border for print */
+    padding: 6px 8px !important;
+    text-align: left;
+  }
+  .print-table th {
+    background-color: #f0f0f0 !important; /* Light gray header for table */
+    font-weight: bold;
+  }
+  .print-table td.text-right {
+    text-align: right;
+  }
+  .print-table .text-green-600 { /* Example: if you still use these for specific semantics */
+    color: #006400 !important; /* Dark Green */
+  }
+  .print-table .text-red-600 {
+     color: #8B0000 !important; /* Dark Red */
+  }
+
+  .print-header-logo {
+    display: block;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .print-header-logo svg { /* Style for placeholder logo */
+    width: 100px;
+    height: auto;
+    fill: #333;
+  }
+  .print-statement-title {
+    font-size: 18pt !important;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 10px !important;
+  }
+  .print-statement-subtitle {
+    font-size: 11pt !important;
+    text-align: center;
+    margin-bottom: 20px !important;
+    color: #555 !important;
   }
   .print-summary {
     margin-top: 20px !important;
     font-size: 10pt !important;
+    border-top: 1px solid #ccc;
+    padding-top: 10px;
   }
-  .print-header {
-    font-size: 14pt !important;
-    font-weight: bold;
-    margin-bottom: 10px !important;
+  .print-summary > div {
+    margin-bottom: 5px;
   }
+  .print-footer {
+    display: block !important; /* Ensure footer is visible for print */
+    position: fixed;
+    bottom: 10px;
+    left: 20px;
+    right: 20px;
+    text-align: center;
+    font-size: 8pt;
+    color: #777 !important;
+    border-top: 1px solid #ccc;
+    padding-top: 5px;
+  }
+
   @page {
-    size: auto;
-    margin: 20mm;
+    size: A4 portrait; /* Common page size */
+    margin: 20mm 15mm; /* Standard margins */
   }
 }
