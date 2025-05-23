@@ -129,7 +129,7 @@ body {
   /* Hide ALL descendants of body by default */
   body * {
     visibility: hidden !important;
-    color: #000 !important;
+    color: #000 !important; /* Reset color for hidden elements that might become visible */
     background-color: transparent !important;
     box-shadow: none !important;
     text-shadow: none !important;
@@ -150,7 +150,7 @@ body {
     margin: 0 !important;
     padding: 20mm 15mm !important; /* Standard A4 margins */
     box-sizing: border-box !important;
-    background-color: #fff !important;
+    background-color: #fff !important; /* Ensure printable area background is white */
   }
 
   /* Elements explicitly marked as no-print */
@@ -162,6 +162,13 @@ body {
   div[data-radix-toast-viewport-width] {
       display: none !important;
   }
+  
+  /* Hide other common Radix UI portal-rendered elements during print if necessary */
+  /* This is a speculative addition; if specific portals are causing issues, target them here */
+  [data-radix-portal] {
+    display: none !important;
+  }
+
 
   /* Page setup */
   @page {
@@ -220,12 +227,16 @@ body {
   .print-table td.text-right {
     text-align: right !important;
   }
-  .print-table .text-green-600 {
+  .print-table .text-green-600 { /* Ensure color overrides for print */
     color: #006400 !important; /* Dark Green */
   }
-  .print-table .text-red-600 {
+  .print-table .text-red-600 { /* Ensure color overrides for print */
      color: #8B0000 !important; /* Dark Red */
   }
+   .print-table .text-sky-500 { /* Ensure color overrides for print - for Credit badge if needed */
+    color: #0077B6 !important; /* Sky Blueish */
+  }
+
 
   .print-footer {
     display: block !important;
@@ -240,3 +251,5 @@ body {
     padding-top: 5px;
   }
 }
+
+    
