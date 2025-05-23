@@ -2,7 +2,7 @@
 "use client";
 
 import type * as React from "react";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Briefcase, Users, HandCoins, Settings, Trash2, XIcon, AlertTriangle, LogOut, UserCircle } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
@@ -31,7 +31,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger, // Added AlertDialogTrigger
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -55,7 +55,6 @@ export default function TripLedgerPage() {
   const { toast } = useToast();
   const [dataLoading, setDataLoading] = useState(true);
 
-
   // Auth check and redirect effect
   useEffect(() => {
     if (!authLoading && !user) {
@@ -63,78 +62,101 @@ export default function TripLedgerPage() {
     }
   }, [user, authLoading, router]);
 
+  const fetchAllData = useCallback(async () => {
+    if (!user) {
+      setDataLoading(false);
+      setExpenses([]);
+      setVendors([]);
+      console.log("User not available, clearing data.");
+      return;
+    }
+
+    setDataLoading(true);
+    console.log("Attempting to fetch data for user:", user.uid);
+    try {
+      // Fetch Expenses for the current user
+      const expensesQuery = query(
+        collection(db, "expenses"),
+        where("userId", "==", user.uid),
+        orderBy("date", "desc")
+      );
+      const expensesSnapshot = await getDocs(expensesQuery);
+      const fetchedExpenses = expensesSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          date: (data.date as Timestamp).toDate(), // Convert Timestamp to Date
+        } as Expense;
+      });
+      console.log("Fetched expenses:", fetchedExpenses);
+      setExpenses(fetchedExpenses);
+
+      // Fetch Vendors for the current user
+      const vendorsQuery = query(
+        collection(db, "vendors"),
+        where("userId", "==", user.uid),
+        orderBy("name", "asc")
+      );
+      const vendorsSnapshot = await getDocs(vendorsQuery);
+      const fetchedVendors = vendorsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      } as Vendor));
+      console.log("Fetched vendors:", fetchedVendors);
+      setVendors(fetchedVendors);
+
+    } catch (error: any) {
+      console.error("Error fetching data from Firestore. Full error object:", error);
+      let description = "Could not fetch records from the database.";
+      if (error.code === 'permission-denied' || error.code === 'PERMISSION_DENIED') {
+        description = "Permission denied. Please check Firestore security rules and ensure they allow read operations for your data.";
+      } else if (error.message) {
+        description = `Error: ${error.message}`;
+      }
+      toast({
+        title: "Error Loading Data",
+        description: description,
+        variant: "destructive",
+      });
+      setExpenses([]); // Clear data on error to avoid showing stale/incorrect data
+      setVendors([]);
+    } finally {
+      setDataLoading(false);
+    }
+  }, [user, toast]); // toast is a dependency for error reporting
+
   // Load data from Firestore once authenticated
   useEffect(() => {
     if (user && !authLoading) {
-      const fetchAllData = async () => {
-        setDataLoading(true);
-        console.log("Attempting to fetch data for user:", user.uid);
-        try {
-          // Fetch Expenses
-          const expensesQuery = query(collection(db, "expenses"), where("userId", "==", user.uid), orderBy("date", "desc"));
-          const expensesSnapshot = await getDocs(expensesQuery);
-          const fetchedExpenses = expensesSnapshot.docs.map(doc => {
-            const data = doc.data();
-            return {
-              id: doc.id,
-              ...data,
-              date: (data.date as Timestamp).toDate(),
-            } as Expense;
-          });
-          console.log("Fetched expenses:", fetchedExpenses);
-          setExpenses(fetchedExpenses);
-
-          // Fetch Vendors
-          const vendorsQuery = query(collection(db, "vendors"), where("userId", "==", user.uid), orderBy("name", "asc"));
-          const vendorsSnapshot = await getDocs(vendorsQuery);
-          const fetchedVendors = vendorsSnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-          } as Vendor));
-          console.log("Fetched vendors:", fetchedVendors);
-          setVendors(fetchedVendors);
-
-        } catch (error: any) {
-          console.error("Error fetching data from Firestore. Full error object:", error);
-          let description = "Could not fetch records from the database.";
-          if (error.code === 'permission-denied' || error.code === 'PERMISSION_DENIED') {
-            description = "Permission denied. Please check Firestore security rules and ensure they are published and allow list/read operations.";
-          } else if (error.message) {
-            description = `Error: ${error.message}`;
-          }
-          toast({
-            title: "Error Loading Data",
-            description: description,
-            variant: "destructive",
-          });
-        } finally {
-          setDataLoading(false);
-        }
-      };
       fetchAllData();
     } else if (!authLoading && !user) {
       // Clear data if user logs out or was never logged in
       setExpenses([]);
       setVendors([]);
       setDataLoading(false);
+      console.log("User logged out or not authenticated, clearing data.");
     }
-  }, [user, authLoading, toast]);
+  }, [user, authLoading, fetchAllData]);
 
 
   const handleAddExpense = async (newExpenseData: ExpenseData) => {
-    if (!user) return;
-    console.log("Attempting to add expense:", newExpenseData);
+    if (!user) {
+      toast({ title: "Not Authenticated", description: "Please log in to add expenses.", variant: "destructive" });
+      return;
+    }
+    console.log("Attempting to add expense for user:", user.uid, "Data:", newExpenseData);
     try {
       const expenseToSave = {
         ...newExpenseData,
         userId: user.uid,
-        date: Timestamp.fromDate(newExpenseData.date),
+        date: Timestamp.fromDate(newExpenseData.date), // Store as Firestore Timestamp
         outstandingBalance: newExpenseData.totalAmountOwed - newExpenseData.amountPaid,
       };
       const docRef = await addDoc(collection(db, "expenses"), expenseToSave);
       console.log("Expense added with ID:", docRef.id);
       // Add to local state, ensuring correct date type and sorting
-      const addedExpense = { id: docRef.id, ...expenseToSave, date: newExpenseData.date } as Expense;
+      const addedExpense = { id: docRef.id, ...expenseToSave, date: newExpenseData.date } as Expense; // Use JS Date for local state
       setExpenses(prevExpenses => [...prevExpenses, addedExpense].sort((a, b) => (b.date as Date).getTime() - (a.date as Date).getTime()));
       toast({
         title: "Expense Added",
@@ -157,11 +179,14 @@ export default function TripLedgerPage() {
   };
 
   const handleDeleteExpense = async (expenseId: string) => {
-    if (!user) return;
-    console.log("Attempting to delete expense with ID:", expenseId);
+    if (!user) {
+      toast({ title: "Not Authenticated", description: "Please log in to delete expenses.", variant: "destructive" });
+      return;
+    }
+    console.log("Attempting to delete expense with ID:", expenseId, "for user:", user.uid);
     try {
       await deleteDoc(doc(db, "expenses", expenseId));
-      console.log("Expense deleted successfully:", expenseId);
+      console.log("Expense deleted successfully from Firestore:", expenseId);
       setExpenses(prevExpenses => prevExpenses.filter(exp => exp.id !== expenseId));
       toast({
         title: "Expense Deleted",
@@ -184,25 +209,28 @@ export default function TripLedgerPage() {
   };
 
   const handleAddVendor = async (newVendorData: VendorData) => {
-    if (!user) return;
-    console.log("Attempting to add vendor:", newVendorData);
+    if (!user) {
+      toast({ title: "Not Authenticated", description: "Please log in to add vendors.", variant: "destructive" });
+      return;
+    }
+    console.log("Attempting to add vendor for user:", user.uid, "Data:", newVendorData);
     try {
       // Check if vendor already exists for this user
       const q = query(collection(db, "vendors"), where("userId", "==", user.uid), where("name", "==", newVendorData.name));
       const querySnapshot = await getDocs(q);
       if (!querySnapshot.empty) {
-        console.log("Vendor already exists:", newVendorData.name);
+        console.log("Vendor already exists for this user:", newVendorData.name);
         toast({
           title: "Vendor Exists",
-          description: `Vendor "${newVendorData.name}" already exists.`,
-          variant: "destructive", // Changed to destructive for more visual cue
+          description: `Vendor "${newVendorData.name}" already exists for you.`,
+          variant: "destructive",
         });
         return;
       }
 
       const vendorToSave = { ...newVendorData, userId: user.uid };
       const docRef = await addDoc(collection(db, "vendors"), vendorToSave);
-      console.log("Vendor added with ID:", docRef.id);
+      console.log("Vendor added with ID:", docRef.id, "for user:", user.uid);
       // Add to local state and sort
       setVendors(prevVendors => [...prevVendors, { id: docRef.id, ...vendorToSave }].sort((a,b) => a.name.localeCompare(b.name)));
       toast({
@@ -226,27 +254,31 @@ export default function TripLedgerPage() {
   };
 
   const handleDeleteVendor = async (vendorId: string) => {
-    if (!user) return;
+    if (!user) {
+      toast({ title: "Not Authenticated", description: "Please log in to delete vendors.", variant: "destructive" });
+      return;
+    }
     const vendorToDelete = vendors.find(v => v.id === vendorId);
     if (!vendorToDelete) return;
-    console.log("Attempting to delete vendor:", vendorToDelete.name, "ID:", vendorId);
+
+    console.log("Attempting to delete vendor:", vendorToDelete.name, "ID:", vendorId, "for user:", user.uid);
 
     try {
-      // Check if vendor is associated with any expenses
+      // Check if vendor is associated with any expenses FOR THIS USER
       const expensesQuery = query(collection(db, "expenses"), where("userId", "==", user.uid), where("vendorName", "==", vendorToDelete.name));
       const expensesSnapshot = await getDocs(expensesQuery);
       if (!expensesSnapshot.empty) {
-        console.log("Deletion prevented for vendor:", vendorToDelete.name, "Reason: Associated with expenses.");
+        console.log("Deletion prevented for vendor:", vendorToDelete.name, "Reason: Associated with user's expenses.");
         toast({
           title: "Deletion Prevented",
-          description: `Vendor "${vendorToDelete.name}" cannot be deleted as it is associated with existing expenses.`,
+          description: `Vendor "${vendorToDelete.name}" cannot be deleted as it is associated with your existing expenses.`,
           variant: "destructive",
         });
         return;
       }
 
       await deleteDoc(doc(db, "vendors", vendorId));
-      console.log("Vendor deleted successfully:", vendorToDelete.name);
+      console.log("Vendor deleted successfully from Firestore:", vendorToDelete.name);
       setVendors(prevVendors => prevVendors.filter(v => v.id !== vendorId));
       toast({
         title: "Vendor Deleted",
@@ -269,7 +301,6 @@ export default function TripLedgerPage() {
   };
   
   const sortedUniqueVendorNames = useMemo(() => {
-    // This remains based on local state, which is fine as vendors state is updated from Firestore.
     return vendors.map(v => v.name).sort();
   }, [vendors]);
 
@@ -292,14 +323,14 @@ export default function TripLedgerPage() {
   }, [filteredExpenses]);
 
   const handlePrint = () => {
-    if (user) { // Ensure user is logged in before printing
-      setPrintDate(format(new Date(), "PPPp")); // Format: Jun 2, 2024 at 3:30 PM
-      setTimeout(() => window.print(), 100); // Delay to allow state update for printDate
+    if (user) {
+      setPrintDate(format(new Date(), "PPPp"));
+      setTimeout(() => window.print(), 100);
     }
   };
   
-  // Loading state for combined auth and initial data fetch
-  if (authLoading || (!user && !authLoading) || (user && dataLoading)) {
+  if (authLoading || (user && dataLoading && expenses.length === 0 && vendors.length === 0)) { // Show loading if auth is pending OR if user is logged in but initial data fetch is happening
+     console.log("Main loading state: authLoading", authLoading, "user", !!user, "dataLoading", dataLoading);
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-background to-secondary/30 p-4">
         <Briefcase className="h-16 w-16 text-primary animate-pulse" />
@@ -308,9 +339,8 @@ export default function TripLedgerPage() {
     );
   }
 
-  // If user is null after auth check (and not loading), they should have been redirected by useEffect.
-  // This state should ideally not be reached if redirection works, but it's a fallback.
-  if (!user) {
+  if (!user && !authLoading) { // Should be redirected by useEffect, this is a fallback
+     console.log("Redirecting to login (fallback)...");
      return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-background to-secondary/30 p-4">
         <Briefcase className="h-16 w-16 text-primary" />
@@ -318,6 +348,8 @@ export default function TripLedgerPage() {
       </div>
     );
   }
+  
+  if (!user) return null; // Should not happen if redirection works, but prevents rendering if user is null
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-secondary/30 p-4 md:p-8">
@@ -360,7 +392,6 @@ export default function TripLedgerPage() {
       </header>
 
       <div className="max-w-6xl mx-auto space-y-8">
-        {/* Forms Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 no-print">
           <div className="lg:col-span-2 space-y-8">
             <Card className="shadow-lg">
@@ -440,7 +471,6 @@ export default function TripLedgerPage() {
         
         <Separator className="my-8 no-print" />
 
-        {/* Filters and Print Section */}
         <Card className="shadow-lg no-print">
           <CardHeader>
             <CardTitle className="flex items-center text-2xl">
@@ -451,7 +481,7 @@ export default function TripLedgerPage() {
           </CardHeader>
           <CardContent>
             <FilterControls
-              vendors={sortedUniqueVendorNames}
+              vendors={sortedUniqueVendorNames} // This should now be populated from user-specific Firestore data
               selectedVendor={selectedVendorFilter}
               onVendorChange={setSelectedVendorFilter}
               onPrint={handlePrint}
@@ -459,11 +489,8 @@ export default function TripLedgerPage() {
           </CardContent>
         </Card>
         
-        {/* Printable Area: Summary and Table */}
         <div className="printable-area">
-           {/* Print Header */}
            <div className="print-header-logo hidden print:block">
-              {/* Simple SVG placeholder for logo - replace with your actual logo if needed */}
               <svg viewBox="0 0 24 24" className="mx-auto" style={{width: '80px', height: 'auto'}} fill="currentColor">
                 <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2ZM18 20H6V4H13V9H18V20Z" />
                 <path d="M8 14H16V12H8V14ZM8 18H13V16H8V18Z"/>
@@ -475,17 +502,16 @@ export default function TripLedgerPage() {
           <div className="print-statement-subtitle hidden print:block">
             {selectedVendorFilter !== "all" ? `For Vendor: ${selectedVendorFilter}` : "All Vendors"}
             <br />
-            Generated on: {printDate}
+            Generated on: {printDate} by {user?.displayName || user?.email}
           </div>
           
           <ExpenseSummary
-            totalPaid={summary.totalPaid}
-            totalOutstanding={summary.totalOutstanding}
+            totalPaid={summary.totalPaid} // Should reflect user-specific data
+            totalOutstanding={summary.totalOutstanding} // Should reflect user-specific data
           />
-          <div className="mt-6"> {/* Spacing before the table */}
-            <ExpenseTable expenses={filteredExpenses} onDeleteExpense={handleDeleteExpense} />
+          <div className="mt-6">
+            <ExpenseTable expenses={filteredExpenses} onDeleteExpense={handleDeleteExpense} /> {/* Should show user-specific data */}
           </div>
-          {/* Print Footer */}
           <div className="print-footer hidden print:block">
             ProLedger - Your Professional Expense Tracking Solution
           </div>
@@ -494,5 +520,3 @@ export default function TripLedgerPage() {
     </div>
   );
 }
-
-    
