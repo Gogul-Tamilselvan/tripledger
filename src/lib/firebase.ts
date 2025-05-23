@@ -7,12 +7,12 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 // Get this from your Firebase project settings:
 // Project Settings > General > Your apps > Web app > Firebase SDK snippet > Config
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID",
+  apiKey: "YOUR_API_KEY", // <--- REPLACE THIS WITH YOUR ACTUAL API KEY
+  authDomain: "YOUR_AUTH_DOMAIN", // <--- REPLACE THIS
+  projectId: "YOUR_PROJECT_ID", // <--- REPLACE THIS
+  storageBucket: "YOUR_STORAGE_BUCKET", // <--- REPLACE THIS
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID", // <--- REPLACE THIS
+  appId: "YOUR_APP_ID", // <--- REPLACE THIS
   // measurementId: "YOUR_MEASUREMENT_ID" // Optional
 };
 
