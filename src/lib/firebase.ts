@@ -7,12 +7,12 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 // Get this from your Firebase project settings:
 // Project Settings > General > Your apps > Web app > Firebase SDK snippet > Config
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY", // <--- REPLACE THIS WITH YOUR ACTUAL API KEY
-  authDomain: "YOUR_AUTH_DOMAIN", // <--- REPLACE THIS
-  projectId: "YOUR_PROJECT_ID", // <--- REPLACE THIS
-  storageBucket: "YOUR_STORAGE_BUCKET", // <--- REPLACE THIS
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID", // <--- REPLACE THIS
-  appId: "YOUR_APP_ID", // <--- REPLACE THIS
+  apiKey: "AIzaSyA2Mpjvz1pv87m19XKgQMXG4hE8kIID3JQ",
+  authDomain: "tripledger-2576d.firebaseapp.com",
+  projectId: "tripledger-2576d",
+  storageBucket: "tripledger-2576d.appspot.com", // Corrected from .firebasestorage.app based on typical Firebase config
+  messagingSenderId: "737032442662",
+  appId: "1:737032442662:web:37dee1de91eef785d2a7e7"
   // measurementId: "YOUR_MEASUREMENT_ID" // Optional
 };
 
