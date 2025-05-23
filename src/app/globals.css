@@ -9,7 +9,7 @@ body {
 
 @layer base {
   :root {
-    /* New Theme: Zinc & Violet */
+    /* New Theme: Zinc & Slate */
     --background: 240 4.8% 95.9%; /* zinc-50 */
     --foreground: 240 10% 3.9%; /* zinc-950 */
 
@@ -19,27 +19,27 @@ body {
     --popover: 0 0% 100%; /* white */
     --popover-foreground: 240 10% 3.9%; /* zinc-950 */
 
-    --primary: 262.1 83.3% 57.8%; /* violet-600 */
+    --primary: 220 13% 46%; /* slate-600 */
     --primary-foreground: 0 0% 100%; /* white */
 
-    --secondary: 240 4.8% 92%; /* zinc-100 (slightly darker) */
+    --secondary: 240 4.8% 92%; /* zinc-100 */
     --secondary-foreground: 240 5.9% 10%; /* zinc-900 */
 
     --muted: 240 4.8% 90%; /* zinc-200 */
     --muted-foreground: 240 3.8% 46.1%; /* zinc-500 */
 
-    --accent: 262.1 75% 65%; /* lighter violet for accent */
-    --accent-foreground: 240 5.9% 10%; /* dark text on accent */
+    --accent: 220 10% 54%; /* slate-500 (lighter slate) */
+    --accent-foreground: 0 0% 100%; /* white */
 
     --destructive: 0 72.2% 50.6%; /* red-500/600 */
     --destructive-foreground: 0 0% 100%; /* white */
 
-    --border: 240 5.9% 88%; /* zinc-200 (darker for border) */
-    --input: 240 5.9% 88%; /* zinc-200 (darker for input) */
-    --ring: 262.1 83.3% 57.8%; /* primary violet */
+    --border: 240 5.9% 88%; /* zinc-200 */
+    --input: 240 5.9% 88%; /* zinc-200 */
+    --ring: 220 13% 46%; /* primary slate */
 
-    --chart-1: 262.1 83.3% 57.8%; /* primary violet */
-    --chart-2: 262.1 75% 65%;  /* accent violet */
+    --chart-1: 220 13% 46%; /* primary slate */
+    --chart-2: 220 10% 54%;  /* accent slate */
     --chart-3: 160 70% 45%; /* teal */
     --chart-4: 35 90% 60%;  /* amber */
     --chart-5: 240 4% 46%;    /* zinc-600 */
@@ -48,12 +48,12 @@ body {
 
     --sidebar-background: 240 4.8% 94%; /* zinc-100 */
     --sidebar-foreground: 240 10% 3.9%; /* zinc-950 */
-    --sidebar-primary: 262.1 83.3% 57.8%; /* primary violet */
+    --sidebar-primary: 220 13% 46%; /* primary slate */
     --sidebar-primary-foreground: 0 0% 100%; /* white */
     --sidebar-accent: 240 4.8% 90%; /* zinc-200 */
     --sidebar-accent-foreground: 240 5.9% 10%; /* zinc-900 */
     --sidebar-border: 240 5.9% 85%; /* zinc-300 */
-    --sidebar-ring: 262.1 83.3% 57.8%; /* primary violet */
+    --sidebar-ring: 220 13% 46%; /* primary slate */
   }
 
   .dark {
@@ -66,8 +66,8 @@ body {
     --popover: 240 5.9% 10%; /* zinc-900 */
     --popover-foreground: 240 5% 96.1%; /* zinc-50 */
 
-    --primary: 262.1 83.3% 62.8%; /* brighter violet for dark */
-    --primary-foreground: 0 0% 100%; /* white */
+    --primary: 220 14% 65%; /* slate-400 (brighter slate for dark) */
+    --primary-foreground: 240 10% 3.9%; /* zinc-950 (dark text on slate-400) */
 
     --secondary: 240 3.7% 15.9%; /* zinc-800 */
     --secondary-foreground: 240 5% 96.1%; /* zinc-50 */
@@ -75,30 +75,30 @@ body {
     --muted: 240 3.7% 15.9%; /* zinc-800 */
     --muted-foreground: 240 5% 64.9%; /* zinc-400 */
 
-    --accent: 262.1 75% 68%; /* brighter accent violet for dark */
-    --accent-foreground: 240 5.9% 10%; /* dark text on accent */
+    --accent: 220 10% 54%; /* slate-500 */
+    --accent-foreground: 0 0% 100%; /* white */
 
     --destructive: 0 62.8% 50.6%; /* red-600 */
     --destructive-foreground: 0 0% 100%; /* white */
 
     --border: 240 3.7% 15.9%; /* zinc-800 */
     --input: 240 3.7% 15.9%; /* zinc-800 */
-    --ring: 262.1 83.3% 62.8%; /* primary violet dark */
+    --ring: 220 14% 65%; /* primary slate dark */
 
-    --chart-1: 262.1 83.3% 62.8%;
-    --chart-2: 262.1 75% 68%;
+    --chart-1: 220 14% 65%;
+    --chart-2: 220 10% 54%;
     --chart-3: 160 70% 55%;
     --chart-4: 35 90% 65%;
-    --chart-5: 240 5% 64.9%;
+    --chart-5: 240 5% 64.9%; /* zinc-400 */
 
     --sidebar-background: 240 5.9% 10%; /* zinc-900 */
     --sidebar-foreground: 240 5% 96.1%; /* zinc-50 */
-    --sidebar-primary: 262.1 83.3% 62.8%; /* brighter violet for dark */
-    --sidebar-primary-foreground: 0 0% 100%; /* white */
+    --sidebar-primary: 220 14% 65%; /* brighter slate for dark */
+    --sidebar-primary-foreground: 240 10% 3.9%; /* dark text */
     --sidebar-accent: 240 3.7% 18%; /* zinc-800 (slightly different) */
     --sidebar-accent-foreground: 240 5% 96.1%; /* zinc-50 */
     --sidebar-border: 240 3.7% 20%; /* zinc-700 */
-    --sidebar-ring: 262.1 83.3% 62.8%; /* primary violet dark */
+    --sidebar-ring: 220 14% 65%; /* primary slate dark */
   }
 }
 
