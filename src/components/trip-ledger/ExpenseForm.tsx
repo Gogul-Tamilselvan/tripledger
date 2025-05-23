@@ -5,7 +5,7 @@ import type * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { CalendarIcon, PlusCircle, Edit3 } from "lucide-react";
+import { CalendarIcon, PlusCircle } from "lucide-react";
 import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
@@ -44,7 +44,6 @@ const formSchema = z.object({
   totalAmountOwed: z.coerce.number().min(0, { message: "Total amount must be non-negative." }),
   amountPaid: z.coerce.number().min(0, { message: "Amount paid must be non-negative." }),
 });
-// Removed .refine(data => data.amountPaid <= data.totalAmountOwed) to allow overpayments
 
 type ExpenseFormValues = z.infer<typeof formSchema>;
 
@@ -67,13 +66,13 @@ export function ExpenseForm({ onAddExpense, vendors }: ExpenseFormProps) {
   });
 
   function onSubmit(values: ExpenseFormValues) {
-    onAddExpense(values); // id and outstandingBalance handled in parent
+    onAddExpense(values);
     toast({
       title: "Expense Added",
       description: `${values.vendorName} expense recorded successfully.`,
       variant: "default",
     });
-    form.reset({ // Reset with specific default values
+    form.reset({ 
         vendorName: "", 
         date: new Date(), 
         description: "", 
@@ -99,12 +98,15 @@ export function ExpenseForm({ onAddExpense, vendors }: ExpenseFormProps) {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {vendors.length === 0 && <SelectItem value="" disabled>No vendors available. Add one first.</SelectItem>}
-                    {vendors.map((vendor) => (
-                      <SelectItem key={vendor.id} value={vendor.name}>
-                        {vendor.name}
-                      </SelectItem>
-                    ))}
+                    {vendors.length === 0 ? (
+                      <p className="p-2 text-sm text-muted-foreground">No vendors available. Add one first.</p>
+                    ) : (
+                      vendors.map((vendor) => (
+                        <SelectItem key={vendor.id} value={vendor.name}>
+                          {vendor.name}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
                 <FormMessage />
