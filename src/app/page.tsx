@@ -124,14 +124,12 @@ export default function TripLedgerPage() {
     } finally {
       setDataLoading(false);
     }
-  }, [user, toast]); // toast is a dependency for error reporting
+  }, [user, toast]); 
 
-  // Load data from Firestore once authenticated
   useEffect(() => {
     if (user && !authLoading) {
       fetchAllData();
     } else if (!authLoading && !user) {
-      // Clear data if user logs out or was never logged in
       setExpenses([]);
       setVendors([]);
       setDataLoading(false);
@@ -150,13 +148,12 @@ export default function TripLedgerPage() {
       const expenseToSave = {
         ...newExpenseData,
         userId: user.uid,
-        date: Timestamp.fromDate(newExpenseData.date), // Store as Firestore Timestamp
+        date: Timestamp.fromDate(newExpenseData.date), 
         outstandingBalance: newExpenseData.totalAmountOwed - newExpenseData.amountPaid,
       };
       const docRef = await addDoc(collection(db, "expenses"), expenseToSave);
       console.log("Expense added with ID:", docRef.id);
-      // Add to local state, ensuring correct date type and sorting
-      const addedExpense = { id: docRef.id, ...expenseToSave, date: newExpenseData.date } as Expense; // Use JS Date for local state
+      const addedExpense = { id: docRef.id, ...expenseToSave, date: newExpenseData.date } as Expense; 
       setExpenses(prevExpenses => [...prevExpenses, addedExpense].sort((a, b) => (b.date as Date).getTime() - (a.date as Date).getTime()));
       toast({
         title: "Expense Added",
@@ -215,7 +212,6 @@ export default function TripLedgerPage() {
     }
     console.log("Attempting to add vendor for user:", user.uid, "Data:", newVendorData);
     try {
-      // Check if vendor already exists for this user
       const q = query(collection(db, "vendors"), where("userId", "==", user.uid), where("name", "==", newVendorData.name));
       const querySnapshot = await getDocs(q);
       if (!querySnapshot.empty) {
@@ -231,7 +227,6 @@ export default function TripLedgerPage() {
       const vendorToSave = { ...newVendorData, userId: user.uid };
       const docRef = await addDoc(collection(db, "vendors"), vendorToSave);
       console.log("Vendor added with ID:", docRef.id, "for user:", user.uid);
-      // Add to local state and sort
       setVendors(prevVendors => [...prevVendors, { id: docRef.id, ...vendorToSave }].sort((a,b) => a.name.localeCompare(b.name)));
       toast({
         title: "Vendor Added",
@@ -264,7 +259,6 @@ export default function TripLedgerPage() {
     console.log("Attempting to delete vendor:", vendorToDelete.name, "ID:", vendorId, "for user:", user.uid);
 
     try {
-      // Check if vendor is associated with any expenses FOR THIS USER
       const expensesQuery = query(collection(db, "expenses"), where("userId", "==", user.uid), where("vendorName", "==", vendorToDelete.name));
       const expensesSnapshot = await getDocs(expensesQuery);
       if (!expensesSnapshot.empty) {
@@ -329,7 +323,7 @@ export default function TripLedgerPage() {
     }
   };
   
-  if (authLoading || (user && dataLoading && expenses.length === 0 && vendors.length === 0)) { // Show loading if auth is pending OR if user is logged in but initial data fetch is happening
+  if (authLoading || (user && dataLoading && expenses.length === 0 && vendors.length === 0)) {
      console.log("Main loading state: authLoading", authLoading, "user", !!user, "dataLoading", dataLoading);
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-background to-secondary/30 p-4">
@@ -339,7 +333,7 @@ export default function TripLedgerPage() {
     );
   }
 
-  if (!user && !authLoading) { // Should be redirected by useEffect, this is a fallback
+  if (!user && !authLoading) { 
      console.log("Redirecting to login (fallback)...");
      return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-background to-secondary/30 p-4">
@@ -349,13 +343,13 @@ export default function TripLedgerPage() {
     );
   }
   
-  if (!user) return null; // Should not happen if redirection works, but prevents rendering if user is null
+  if (!user) return null; 
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-secondary/30 p-4 md:p-8">
       <header className="mb-10 text-center no-print">
         <div className="flex justify-between items-center">
-            <div></div> {/* Spacer */}
+            <div></div> 
             <div className="inline-flex items-center bg-card shadow-md rounded-lg p-3">
               <Briefcase className="h-10 w-10 text-primary mr-3" />
               <h1 className="text-4xl font-bold tracking-tight text-foreground">ProLedger</h1>
@@ -481,7 +475,7 @@ export default function TripLedgerPage() {
           </CardHeader>
           <CardContent>
             <FilterControls
-              vendors={sortedUniqueVendorNames} // This should now be populated from user-specific Firestore data
+              vendors={sortedUniqueVendorNames} 
               selectedVendor={selectedVendorFilter}
               onVendorChange={setSelectedVendorFilter}
               onPrint={handlePrint}
@@ -506,11 +500,11 @@ export default function TripLedgerPage() {
           </div>
           
           <ExpenseSummary
-            totalPaid={summary.totalPaid} // Should reflect user-specific data
-            totalOutstanding={summary.totalOutstanding} // Should reflect user-specific data
+            totalPaid={summary.totalPaid} 
+            totalOutstanding={summary.totalOutstanding} 
           />
           <div className="mt-6">
-            <ExpenseTable expenses={filteredExpenses} onDeleteExpense={handleDeleteExpense} /> {/* Should show user-specific data */}
+            <ExpenseTable expenses={filteredExpenses} onDeleteExpense={handleDeleteExpense} /> 
           </div>
           <div className="print-footer hidden print:block">
             ProLedger - Your Professional Expense Tracking Solution

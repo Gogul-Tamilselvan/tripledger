@@ -129,7 +129,7 @@ body {
   /* Hide ALL descendants of body by default */
   body * {
     visibility: hidden !important;
-    color: #000 !important; 
+    color: #000 !important;
     background-color: transparent !important;
     box-shadow: none !important;
     text-shadow: none !important;
@@ -139,7 +139,7 @@ body {
   .printable-area, .printable-area * {
     visibility: visible !important;
   }
-  
+
   /* Style the .printable-area to take over the page */
   .printable-area {
     position: absolute !important;
@@ -174,7 +174,7 @@ body {
     text-align: center;
     margin-bottom: 20px;
   }
-  .print-header-logo svg { 
+  .print-header-logo svg {
     width: 80px; /* Adjusted size */
     height: auto;
     fill: #333 !important;
@@ -209,18 +209,18 @@ body {
     margin-top: 15px;
   }
   .print-table th, .print-table td {
-    border: 1px solid #666 !important; 
+    border: 1px solid #666 !important;
     padding: 6px 8px !important;
     text-align: left;
   }
   .print-table th {
-    background-color: #f0f0f0 !important; 
+    background-color: #f0f0f0 !important;
     font-weight: bold;
   }
   .print-table td.text-right {
     text-align: right !important;
   }
-  .print-table .text-green-600 { 
+  .print-table .text-green-600 {
     color: #006400 !important; /* Dark Green */
   }
   .print-table .text-red-600 {
@@ -228,7 +228,7 @@ body {
   }
 
   .print-footer {
-    display: block !important; 
+    display: block !important;
     position: fixed; /* Note: This may only appear correctly on the "last page" if content overflows */
     bottom: 10mm; /* Adjusted to be within typical printer bottom margin */
     left: 15mm; /* Align with .printable-area padding */
