@@ -5,7 +5,7 @@ import type * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { PlusCircle, UserPlus } from "lucide-react";
+import { UserPlus } from "lucide-react"; // Removed PlusCircle
 
 import { Button } from "@/components/ui/button";
 import {
@@ -17,8 +17,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import type { Vendor } from "@/types/vendor";
-import { useToast } from "@/hooks/use-toast";
+import type { VendorData } from "@/types/vendor"; // Use VendorData for form
+// Removed useToast as it's handled in page.tsx
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Vendor name must be at least 2 characters." }).max(50, { message: "Vendor name must be 50 characters or less." }),
@@ -27,11 +27,10 @@ const formSchema = z.object({
 type VendorFormValues = z.infer<typeof formSchema>;
 
 interface VendorFormProps {
-  onAddVendor: (vendor: Omit<Vendor, 'id'>) => void;
+  onAddVendor: (vendor: VendorData) => Promise<void>; // Now async
 }
 
 export function VendorForm({ onAddVendor }: VendorFormProps) {
-  const { toast } = useToast();
   const form = useForm<VendorFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -39,13 +38,9 @@ export function VendorForm({ onAddVendor }: VendorFormProps) {
     },
   });
 
-  function onSubmit(values: VendorFormValues) {
-    onAddVendor({ name: values.name });
-    toast({
-      title: "Vendor Added",
-      description: `Vendor "${values.name}" has been successfully added.`,
-      variant: "default",
-    });
+  async function onSubmit(values: VendorFormValues) { // Mark as async
+    await onAddVendor(values); // Await the async operation
+    // Toast is handled in page.tsx after successful Firestore operation
     form.reset();
   }
 
@@ -65,8 +60,8 @@ export function VendorForm({ onAddVendor }: VendorFormProps) {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full" variant="outline">
-          <UserPlus className="mr-2 h-4 w-4" /> Add Vendor
+        <Button type="submit" className="w-full" variant="outline" disabled={form.formState.isSubmitting}>
+          {form.formState.isSubmitting ? "Adding..." : <><UserPlus className="mr-2 h-4 w-4" /> Add Vendor</>}
         </Button>
       </form>
     </Form>

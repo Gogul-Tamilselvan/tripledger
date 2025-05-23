@@ -5,12 +5,14 @@ import type * as React from "react";
 import { useState, useMemo, useEffect } from "react";
 import { Briefcase, Users, HandCoins, Settings, Trash2, XIcon, AlertTriangle, LogOut, UserCircle } from "lucide-react";
 import { format } from "date-fns";
-import { useRouter } from "next/navigation"; // For redirecting
+import { useRouter } from "next/navigation";
+import { collection, addDoc, getDocs, deleteDoc, doc, query, where, Timestamp, orderBy } from "firebase/firestore";
 
-import type { Expense } from "@/types/expense";
-import type { Vendor } from "@/types/vendor";
+import type { Expense, ExpenseData } from "@/types/expense";
+import type { Vendor, VendorData } from "@/types/vendor";
 
-import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
+import { useAuth } from "@/contexts/AuthContext";
+import { db } from "@/lib/firebase"; // Import db
 import { ExpenseForm } from "@/components/trip-ledger/ExpenseForm";
 import { VendorForm } from "@/components/trip-ledger/VendorForm";
 import { FilterControls } from "@/components/trip-ledger/FilterControls";
@@ -29,7 +31,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -42,138 +43,182 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-
-// Sample initial data (will be overridden by localStorage or start empty if localStorage is empty)
-const initialExpensesData: Expense[] = [
-  // { id: "1", vendorName: "Manali Travels", date: new Date("2024-07-15"), description: "Bus tickets for team", totalAmountOwed: 3000, amountPaid: 1000, outstandingBalance: 2000 },
-  // { id: "2", vendorName: "Shimla Tours", date: new Date("2024-07-20"), description: "Hotel booking - 2 nights", totalAmountOwed: 5000, amountPaid: 5000, outstandingBalance: 0 },
-];
-
-const initialVendorsData: Vendor[] = [
-  // { id: "v1", name: "Manali Travels" },
-  // { id: "v2", name: "Shimla Tours" },
-];
-
-
 export default function TripLedgerPage() {
-  const { user, loading, logout } = useAuth(); // Get auth state
-  const router = useRouter(); // For redirecting
+  const { user, loading: authLoading, logout } = useAuth();
+  const router = useRouter();
 
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [selectedVendorFilter, setSelectedVendorFilter] = useState<string>("all");
-  const [isClient, setIsClient] = useState(false);
   const [printDate, setPrintDate] = useState<string>("");
   const { toast } = useToast();
+  const [dataLoading, setDataLoading] = useState(true);
+
 
   // Auth check and redirect effect
   useEffect(() => {
-    if (!loading && !user) {
+    if (!authLoading && !user) {
       router.push("/login");
     }
-  }, [user, loading, router]);
+  }, [user, authLoading, router]);
 
-  // Load data from localStorage once authenticated and client-side
+  // Load data from Firestore once authenticated
   useEffect(() => {
-    if (user && typeof window !== 'undefined') { // Ensure user is logged in and on client
-      setIsClient(true); // Set isClient only after auth check
-      const storedExpenses = localStorage.getItem(`tripLedgerExpenses_${user.uid}`);
-      if (storedExpenses) {
+    if (user && !authLoading) {
+      const fetchAllData = async () => {
+        setDataLoading(true);
         try {
-          const parsedExpenses = JSON.parse(storedExpenses).map((exp: any) => ({
-            ...exp,
-            date: new Date(exp.date),
-          }));
-          setExpenses(parsedExpenses);
+          // Fetch Expenses
+          const expensesQuery = query(collection(db, "expenses"), where("userId", "==", user.uid), orderBy("date", "desc"));
+          const expensesSnapshot = await getDocs(expensesQuery);
+          const fetchedExpenses = expensesSnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              ...data,
+              date: (data.date as Timestamp).toDate(), // Convert Firestore Timestamp to JS Date
+            } as Expense;
+          });
+          setExpenses(fetchedExpenses);
+
+          // Fetch Vendors
+          const vendorsQuery = query(collection(db, "vendors"), where("userId", "==", user.uid), orderBy("name", "asc"));
+          const vendorsSnapshot = await getDocs(vendorsQuery);
+          const fetchedVendors = vendorsSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+          } as Vendor));
+          setVendors(fetchedVendors);
+
         } catch (error) {
-          console.error("Failed to parse expenses from localStorage", error);
-          setExpenses(initialExpensesData); // Fallback to initial if parsing fails
-        }
-      } else {
-        setExpenses(initialExpensesData); // Start with initial if nothing in localStorage
-      }
-
-      const storedVendors = localStorage.getItem(`tripLedgerVendors_${user.uid}`);
-      if (storedVendors) {
-        try {
-          setVendors(JSON.parse(storedVendors));
-        } catch (error) {
-          console.error("Failed to parse vendors from localStorage", error);
-          setVendors(initialVendorsData);
-        }
-      } else {
-        setVendors(initialVendorsData);
-      }
-    }
-  }, [user, loading]); // Depend on user and loading
-
-  // Save expenses to localStorage
-  useEffect(() => {
-    if (isClient && user) {
-        localStorage.setItem(`tripLedgerExpenses_${user.uid}`, JSON.stringify(expenses));
-    }
-  }, [expenses, isClient, user]);
-
-  // Save vendors to localStorage
-  useEffect(() => {
-    if (isClient && user) {
-        localStorage.setItem(`tripLedgerVendors_${user.uid}`, JSON.stringify(vendors));
-    }
-  }, [vendors, isClient, user]);
-
-
-  const handleAddExpense = (newExpense: Omit<Expense, 'id' | 'outstandingBalance'>) => {
-    const fullExpense: Expense = {
-        ...newExpense,
-        id: crypto.randomUUID(),
-        outstandingBalance: newExpense.totalAmountOwed - newExpense.amountPaid,
-    };
-    setExpenses((prevExpenses) => [...prevExpenses, fullExpense].sort((a,b) => b.date.getTime() - a.date.getTime()));
-  };
-
-  const handleDeleteExpense = (expenseId: string) => {
-    setExpenses((prevExpenses) => prevExpenses.filter(exp => exp.id !== expenseId));
-    toast({
-      title: "Expense Deleted",
-      description: "The expense record has been removed.",
-      variant: "default",
-    });
-  };
-
-  const handleAddVendor = (newVendor: Omit<Vendor, 'id'>) => {
-    const existingVendor = vendors.find(v => v.name.toLowerCase() === newVendor.name.toLowerCase());
-    if (existingVendor) {
-        toast({
-            title: "Vendor Exists",
-            description: `Vendor "${newVendor.name}" already exists.`,
+          console.error("Error fetching data from Firestore:", error);
+          toast({
+            title: "Error Loading Data",
+            description: "Could not fetch records from the database.",
             variant: "destructive",
+          });
+        } finally {
+          setDataLoading(false);
+        }
+      };
+      fetchAllData();
+    } else if (!authLoading && !user) {
+      // Clear data if user logs out
+      setExpenses([]);
+      setVendors([]);
+      setDataLoading(false);
+    }
+  }, [user, authLoading, toast]);
+
+
+  const handleAddExpense = async (newExpenseData: ExpenseData) => {
+    if (!user) return;
+    try {
+      const expenseToSave = {
+        ...newExpenseData,
+        userId: user.uid,
+        date: Timestamp.fromDate(newExpenseData.date), // Convert JS Date to Firestore Timestamp
+        outstandingBalance: newExpenseData.totalAmountOwed - newExpenseData.amountPaid,
+      };
+      const docRef = await addDoc(collection(db, "expenses"), expenseToSave);
+      setExpenses(prevExpenses => [{ id: docRef.id, ...expenseToSave, date: newExpenseData.date } as Expense, ...prevExpenses].sort((a,b) => (b.date as Date).getTime() - (a.date as Date).getTime()));
+      toast({
+        title: "Expense Added",
+        description: `${newExpenseData.vendorName} expense recorded successfully.`,
+      });
+    } catch (error) {
+      console.error("Error adding expense to Firestore:", error);
+      toast({
+        title: "Error Adding Expense",
+        description: "Could not save the expense.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteExpense = async (expenseId: string) => {
+    if (!user) return;
+    try {
+      await deleteDoc(doc(db, "expenses", expenseId));
+      setExpenses(prevExpenses => prevExpenses.filter(exp => exp.id !== expenseId));
+      toast({
+        title: "Expense Deleted",
+        description: "The expense record has been removed.",
+      });
+    } catch (error) {
+      console.error("Error deleting expense from Firestore:", error);
+      toast({
+        title: "Error Deleting Expense",
+        description: "Could not remove the expense.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAddVendor = async (newVendorData: VendorData) => {
+    if (!user) return;
+    try {
+      // Check if vendor already exists for this user
+      const q = query(collection(db, "vendors"), where("userId", "==", user.uid), where("name", "==", newVendorData.name));
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        toast({
+          title: "Vendor Exists",
+          description: `Vendor "${newVendorData.name}" already exists.`,
+          variant: "destructive",
         });
         return;
+      }
+
+      const vendorToSave = { ...newVendorData, userId: user.uid };
+      const docRef = await addDoc(collection(db, "vendors"), vendorToSave);
+      setVendors(prevVendors => [...prevVendors, { id: docRef.id, ...vendorToSave }].sort((a,b) => a.name.localeCompare(b.name)));
+      toast({
+        title: "Vendor Added",
+        description: `Vendor "${newVendorData.name}" has been successfully added.`,
+      });
+    } catch (error) {
+      console.error("Error adding vendor to Firestore:", error);
+      toast({
+        title: "Error Adding Vendor",
+        description: "Could not save the vendor.",
+        variant: "destructive",
+      });
     }
-    const fullVendor: Vendor = { ...newVendor, id: crypto.randomUUID() };
-    setVendors((prevVendors) => [...prevVendors, fullVendor].sort((a,b) => a.name.localeCompare(b.name)));
   };
 
-  const handleDeleteVendor = (vendorId: string) => {
+  const handleDeleteVendor = async (vendorId: string) => {
+    if (!user) return;
     const vendorToDelete = vendors.find(v => v.id === vendorId);
     if (!vendorToDelete) return;
 
-    const isVendorUsed = expenses.some(exp => exp.vendorName === vendorToDelete.name);
-    if (isVendorUsed) {
+    try {
+      // Check if vendor is used in any expenses for this user
+      const expensesQuery = query(collection(db, "expenses"), where("userId", "==", user.uid), where("vendorName", "==", vendorToDelete.name));
+      const expensesSnapshot = await getDocs(expensesQuery);
+      if (!expensesSnapshot.empty) {
+        toast({
+          title: "Deletion Prevented",
+          description: `Vendor "${vendorToDelete.name}" cannot be deleted as it is associated with existing expenses.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      await deleteDoc(doc(db, "vendors", vendorId));
+      setVendors(prevVendors => prevVendors.filter(v => v.id !== vendorId));
       toast({
-        title: "Deletion Prevented",
-        description: `Vendor "${vendorToDelete.name}" cannot be deleted as it is associated with existing expenses.`,
+        title: "Vendor Deleted",
+        description: `Vendor "${vendorToDelete.name}" has been removed.`,
+      });
+    } catch (error) {
+      console.error("Error deleting vendor from Firestore:", error);
+      toast({
+        title: "Error Deleting Vendor",
+        description: "Could not remove the vendor.",
         variant: "destructive",
       });
-      return;
     }
-
-    setVendors((prevVendors) => prevVendors.filter(v => v.id !== vendorId));
-    toast({
-      title: "Vendor Deleted",
-      description: `Vendor "${vendorToDelete.name}" has been removed.`,
-      variant: "default",
-    });
   };
   
   const sortedUniqueVendorNames = useMemo(() => {
@@ -199,14 +244,13 @@ export default function TripLedgerPage() {
   }, [filteredExpenses]);
 
   const handlePrint = () => {
-    if (isClient) { // isClient check already ensures user is present
+    if (user) {
       setPrintDate(format(new Date(), "PPPp"));
       setTimeout(() => window.print(), 100);
     }
   };
   
-  // If loading or no user, show loading screen (or user will be redirected)
-  if (loading || !user) {
+  if (authLoading || (!user && !authLoading) || dataLoading) { // Show loading if auth is pending, user not logged in yet or data is loading
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-background to-secondary/30 p-4">
         <Briefcase className="h-16 w-16 text-primary animate-pulse" />

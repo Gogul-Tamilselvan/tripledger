@@ -33,9 +33,9 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import type { Expense } from "@/types/expense";
+import type { ExpenseData } from "@/types/expense"; // Use ExpenseData for form
 import type { Vendor } from "@/types/vendor";
-import { useToast } from "@/hooks/use-toast";
+// Removed useToast as it's handled in page.tsx
 
 const formSchema = z.object({
   vendorName: z.string().min(1, { message: "Vendor selection is required." }),
@@ -48,12 +48,11 @@ const formSchema = z.object({
 type ExpenseFormValues = z.infer<typeof formSchema>;
 
 interface ExpenseFormProps {
-  onAddExpense: (expense: Omit<Expense, 'id' | 'outstandingBalance'>) => void;
+  onAddExpense: (expense: ExpenseData) => Promise<void>; // Now async
   vendors: Vendor[];
 }
 
 export function ExpenseForm({ onAddExpense, vendors }: ExpenseFormProps) {
-  const { toast } = useToast();
   const form = useForm<ExpenseFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -65,13 +64,9 @@ export function ExpenseForm({ onAddExpense, vendors }: ExpenseFormProps) {
     },
   });
 
-  function onSubmit(values: ExpenseFormValues) {
-    onAddExpense(values);
-    toast({
-      title: "Expense Added",
-      description: `${values.vendorName} expense recorded successfully.`,
-      variant: "default",
-    });
+  async function onSubmit(values: ExpenseFormValues) { // Mark as async
+    await onAddExpense(values); // Await the async operation
+    // Toast is handled in page.tsx after successful Firestore operation
     form.reset({ 
         vendorName: "", 
         date: new Date(), 
@@ -91,7 +86,7 @@ export function ExpenseForm({ onAddExpense, vendors }: ExpenseFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Vendor Name</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value || ""}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a vendor" />
@@ -99,7 +94,7 @@ export function ExpenseForm({ onAddExpense, vendors }: ExpenseFormProps) {
                   </FormControl>
                   <SelectContent>
                     {vendors.length === 0 ? (
-                      <p className="p-2 text-sm text-muted-foreground">No vendors available. Add one first.</p>
+                       <p className="p-2 text-sm text-muted-foreground text-center">No vendors. Add one first.</p>
                     ) : (
                       vendors.map((vendor) => (
                         <SelectItem key={vendor.id} value={vendor.name}>
@@ -198,8 +193,8 @@ export function ExpenseForm({ onAddExpense, vendors }: ExpenseFormProps) {
             )}
           />
         </div>
-        <Button type="submit" className="w-full md:w-auto" variant="default">
-          <PlusCircle className="mr-2 h-4 w-4" /> Add Expense
+        <Button type="submit" className="w-full md:w-auto" variant="default" disabled={form.formState.isSubmitting}>
+          {form.formState.isSubmitting ? "Adding..." : <><PlusCircle className="mr-2 h-4 w-4" /> Add Expense</>}
         </Button>
       </form>
     </Form>
