@@ -14,20 +14,36 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
+    // This effect handles redirecting the user to the main page if they are authenticated
+    // and no longer in a loading state.
     if (!loading && user) {
-      router.push("/"); // Redirect to home if already logged in
+      router.push("/");
     }
   }, [user, loading, router]);
 
-  if (loading || user) { // Show loading or nothing if user is already present (will be redirected)
+  if (loading) {
+    // Case 1: Authentication state is loading (e.g., initial check, during Google Sign-In process)
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-background to-secondary/30 p-4">
             <Briefcase className="h-16 w-16 text-primary animate-pulse" />
-            <p className="mt-4 text-lg text-muted-foreground">Loading...</p>
+            <p className="mt-4 text-lg text-muted-foreground">Authenticating...</p>
         </div>
     );
   }
 
+  if (user) {
+    // Case 2: User is authenticated (and loading is false), but we are still on the login page.
+    // This state should ideally be brief as the useEffect above should be redirecting.
+    // Showing a "Redirecting..." message provides feedback if the redirect is not instantaneous.
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-background to-secondary/30 p-4">
+        <Briefcase className="h-16 w-16 text-primary" /> {/* No pulse, user object loaded */}
+        <p className="mt-4 text-lg text-muted-foreground">Redirecting to dashboard...</p>
+      </div>
+    );
+  }
+
+  // Case 3: Not loading and no user, so show the actual login form.
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-background to-secondary/30 p-4">
       <Card className="w-full max-w-md shadow-2xl">
@@ -45,9 +61,9 @@ export default function LoginPage() {
             onClick={loginWithGoogle}
             className="w-full text-lg py-6"
             variant="default"
-            disabled={loading}
+            disabled={loading} // Button should be disabled if auth state is loading
           >
-            <LogIn className="mr-3 h-6 w-6" /> {/* Using LogIn icon */}
+            <LogIn className="mr-3 h-6 w-6" />
             Sign In with Google
           </Button>
         </CardContent>
