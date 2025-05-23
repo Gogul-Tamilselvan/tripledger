@@ -9,95 +9,96 @@ body {
 
 @layer base {
   :root {
-    /* New Professional Theme: Slate & Steel Blue with Amber Accent */
-    --background: 220 20% 97%; /* Lighter Slate Gray */
-    --foreground: 220 15% 25%; /* Darker Slate Gray */
+    /* New Theme: Zinc & Violet */
+    --background: 240 4.8% 95.9%; /* zinc-50 */
+    --foreground: 240 10% 3.9%; /* zinc-950 */
 
-    --card: 0 0% 100%; /* White cards */
-    --card-foreground: 220 15% 25%;
+    --card: 0 0% 100%; /* white */
+    --card-foreground: 240 10% 3.9%; /* zinc-950 */
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 15% 25%;
+    --popover: 0 0% 100%; /* white */
+    --popover-foreground: 240 10% 3.9%; /* zinc-950 */
 
-    --primary: 210 70% 55%; /* Steel Blue */
-    --primary-foreground: 0 0% 100%; /* White text on blue */
+    --primary: 262.1 83.3% 57.8%; /* violet-600 */
+    --primary-foreground: 0 0% 100%; /* white */
 
-    --secondary: 220 15% 90%; /* Light Slate Gray for secondary elements */
-    --secondary-foreground: 220 15% 25%;
+    --secondary: 240 4.8% 92%; /* zinc-100 (slightly darker) */
+    --secondary-foreground: 240 5.9% 10%; /* zinc-900 */
 
-    --muted: 220 15% 93%; /* Adjusted muted for better harmony */
-    --muted-foreground: 220 10% 45%; /* Adjusted muted foreground */
+    --muted: 240 4.8% 90%; /* zinc-200 */
+    --muted-foreground: 240 3.8% 46.1%; /* zinc-500 */
 
-    --accent: 35 90% 60%; /* Soft Amber/Orange */
-    --accent-foreground: 220 15% 15%; /* Dark text on accent */
+    --accent: 262.1 75% 65%; /* lighter violet for accent */
+    --accent-foreground: 240 5.9% 10%; /* dark text on accent */
 
-    --destructive: 0 70% 55%; /* Softer Red */
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 72.2% 50.6%; /* red-500/600 */
+    --destructive-foreground: 0 0% 100%; /* white */
 
-    --border: 220 15% 85%; /* Softer border */
-    --input: 220 15% 88%; /* Matching input border */
-    --ring: 210 70% 55%; /* Primary blue for focus rings */
+    --border: 240 5.9% 88%; /* zinc-200 (darker for border) */
+    --input: 240 5.9% 88%; /* zinc-200 (darker for input) */
+    --ring: 262.1 83.3% 57.8%; /* primary violet */
 
-    --chart-1: 210 70% 55%; /* Steel Blue */
-    --chart-2: 35 90% 60%;  /* Soft Amber */
-    --chart-3: 180 50% 45%; /* Teal */
-    --chart-4: 260 60% 65%; /* Lavender */
-    --chart-5: 0 0% 50%;    /* Medium Gray */
+    --chart-1: 262.1 83.3% 57.8%; /* primary violet */
+    --chart-2: 262.1 75% 65%;  /* accent violet */
+    --chart-3: 160 70% 45%; /* teal */
+    --chart-4: 35 90% 60%;  /* amber */
+    --chart-5: 240 4% 46%;    /* zinc-600 */
+    
     --radius: 0.5rem;
 
-    --sidebar-background: 220 15% 98%;
-    --sidebar-foreground: 220 10% 20%;
-    --sidebar-primary: 210 70% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 15% 92%;
-    --sidebar-accent-foreground: 220 10% 15%;
-    --sidebar-border: 220 15% 88%;
-    --sidebar-ring: 210 70% 55%;
+    --sidebar-background: 240 4.8% 94%; /* zinc-100 */
+    --sidebar-foreground: 240 10% 3.9%; /* zinc-950 */
+    --sidebar-primary: 262.1 83.3% 57.8%; /* primary violet */
+    --sidebar-primary-foreground: 0 0% 100%; /* white */
+    --sidebar-accent: 240 4.8% 90%; /* zinc-200 */
+    --sidebar-accent-foreground: 240 5.9% 10%; /* zinc-900 */
+    --sidebar-border: 240 5.9% 85%; /* zinc-300 */
+    --sidebar-ring: 262.1 83.3% 57.8%; /* primary violet */
   }
 
   .dark {
-    --background: 220 15% 10%; /* Dark Slate */
-    --foreground: 220 10% 90%; /* Light Gray text */
+    --background: 240 10% 3.9%; /* zinc-950 */
+    --foreground: 240 5% 96.1%; /* zinc-50 */
 
-    --card: 220 15% 15%; /* Darker Card */
-    --card-foreground: 220 10% 90%;
+    --card: 240 5.9% 10%; /* zinc-900 */
+    --card-foreground: 240 5% 96.1%; /* zinc-50 */
 
-    --popover: 220 15% 15%;
-    --popover-foreground: 220 10% 90%;
+    --popover: 240 5.9% 10%; /* zinc-900 */
+    --popover-foreground: 240 5% 96.1%; /* zinc-50 */
 
-    --primary: 210 70% 60%; /* Slightly brighter Steel Blue for dark mode */
-    --primary-foreground: 0 0% 100%;
+    --primary: 262.1 83.3% 62.8%; /* brighter violet for dark */
+    --primary-foreground: 0 0% 100%; /* white */
 
-    --secondary: 220 15% 25%; /* Darker Secondary */
-    --secondary-foreground: 220 10% 90%;
+    --secondary: 240 3.7% 15.9%; /* zinc-800 */
+    --secondary-foreground: 240 5% 96.1%; /* zinc-50 */
 
-    --muted: 220 15% 22%;
-    --muted-foreground: 220 10% 65%;
+    --muted: 240 3.7% 15.9%; /* zinc-800 */
+    --muted-foreground: 240 5% 64.9%; /* zinc-400 */
 
-    --accent: 35 90% 65%; /* Brighter Amber for dark mode */
-    --accent-foreground: 220 15% 10%;
+    --accent: 262.1 75% 68%; /* brighter accent violet for dark */
+    --accent-foreground: 240 5.9% 10%; /* dark text on accent */
 
-    --destructive: 0 70% 60%; /* Brighter Red */
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 62.8% 50.6%; /* red-600 */
+    --destructive-foreground: 0 0% 100%; /* white */
 
-    --border: 220 15% 30%;
-    --input: 220 15% 30%;
-    --ring: 210 70% 60%;
+    --border: 240 3.7% 15.9%; /* zinc-800 */
+    --input: 240 3.7% 15.9%; /* zinc-800 */
+    --ring: 262.1 83.3% 62.8%; /* primary violet dark */
 
-    --chart-1: 210 70% 60%;
-    --chart-2: 35 90% 65%;
-    --chart-3: 180 50% 50%;
-    --chart-4: 260 60% 70%;
-    --chart-5: 0 0% 60%;
+    --chart-1: 262.1 83.3% 62.8%;
+    --chart-2: 262.1 75% 68%;
+    --chart-3: 160 70% 55%;
+    --chart-4: 35 90% 65%;
+    --chart-5: 240 5% 64.9%;
 
-    --sidebar-background: 220 15% 12%;
-    --sidebar-foreground: 220 10% 88%;
-    --sidebar-primary: 210 70% 55%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 15% 20%;
-    --sidebar-accent-foreground: 220 10% 90%;
-    --sidebar-border: 220 15% 25%;
-    --sidebar-ring: 210 70% 60%;
+    --sidebar-background: 240 5.9% 10%; /* zinc-900 */
+    --sidebar-foreground: 240 5% 96.1%; /* zinc-50 */
+    --sidebar-primary: 262.1 83.3% 62.8%; /* brighter violet for dark */
+    --sidebar-primary-foreground: 0 0% 100%; /* white */
+    --sidebar-accent: 240 3.7% 18%; /* zinc-800 (slightly different) */
+    --sidebar-accent-foreground: 240 5% 96.1%; /* zinc-50 */
+    --sidebar-border: 240 3.7% 20%; /* zinc-700 */
+    --sidebar-ring: 262.1 83.3% 62.8%; /* primary violet dark */
   }
 }
 
@@ -164,7 +165,6 @@ body {
   }
   
   /* Hide other common Radix UI portal-rendered elements during print if necessary */
-  /* This is a speculative addition; if specific portals are causing issues, target them here */
   [data-radix-portal] {
     display: none !important;
   }
@@ -187,7 +187,7 @@ body {
     fill: #333 !important;
   }
   .print-statement-title {
-    display: block !important;
+    display: none !important; /* Changed to none to hide the headline */
     font-size: 18pt !important;
     font-weight: bold;
     text-align: center;
@@ -251,5 +251,3 @@ body {
     padding-top: 5px;
   }
 }
-
-    
