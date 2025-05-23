@@ -31,6 +31,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger, // Added AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -96,8 +97,8 @@ export default function TripLedgerPage() {
         } catch (error: any) {
           console.error("Error fetching data from Firestore. Full error object:", error);
           let description = "Could not fetch records from the database.";
-          if (error.code === 'permission-denied') {
-            description = "Permission denied. Please check Firestore security rules and ensure they are published.";
+          if (error.code === 'permission-denied' || error.code === 'PERMISSION_DENIED') {
+            description = "Permission denied. Please check Firestore security rules and ensure they are published and allow list/read operations.";
           } else if (error.message) {
             description = `Error: ${error.message}`;
           }
@@ -112,6 +113,7 @@ export default function TripLedgerPage() {
       };
       fetchAllData();
     } else if (!authLoading && !user) {
+      // Clear data if user logs out or was never logged in
       setExpenses([]);
       setVendors([]);
       setDataLoading(false);
@@ -131,7 +133,9 @@ export default function TripLedgerPage() {
       };
       const docRef = await addDoc(collection(db, "expenses"), expenseToSave);
       console.log("Expense added with ID:", docRef.id);
-      setExpenses(prevExpenses => [{ id: docRef.id, ...expenseToSave, date: newExpenseData.date } as Expense, ...prevExpenses].sort((a,b) => (b.date as Date).getTime() - (a.date as Date).getTime()));
+      // Add to local state, ensuring correct date type and sorting
+      const addedExpense = { id: docRef.id, ...expenseToSave, date: newExpenseData.date } as Expense;
+      setExpenses(prevExpenses => [...prevExpenses, addedExpense].sort((a, b) => (b.date as Date).getTime() - (a.date as Date).getTime()));
       toast({
         title: "Expense Added",
         description: `${newExpenseData.vendorName} expense recorded successfully.`,
@@ -139,8 +143,8 @@ export default function TripLedgerPage() {
     } catch (error: any) {
       console.error("Error adding expense to Firestore. Full error object:", error);
       let description = "Could not save the expense.";
-      if (error.code === 'permission-denied') {
-        description = "Permission denied. Please check Firestore security rules.";
+      if (error.code === 'permission-denied' || error.code === 'PERMISSION_DENIED') {
+        description = "Permission denied. Please check Firestore security rules for 'expenses' collection (create operation).";
       } else if (error.message) {
         description = `Error: ${error.message}`;
       }
@@ -166,8 +170,8 @@ export default function TripLedgerPage() {
     } catch (error: any) {
       console.error("Error deleting expense from Firestore. Full error object:", error);
       let description = "Could not remove the expense.";
-       if (error.code === 'permission-denied') {
-        description = "Permission denied. Please check Firestore security rules.";
+       if (error.code === 'permission-denied' || error.code === 'PERMISSION_DENIED') {
+        description = "Permission denied. Please check Firestore security rules for 'expenses' collection (delete operation).";
       } else if (error.message) {
         description = `Error: ${error.message}`;
       }
@@ -183,6 +187,7 @@ export default function TripLedgerPage() {
     if (!user) return;
     console.log("Attempting to add vendor:", newVendorData);
     try {
+      // Check if vendor already exists for this user
       const q = query(collection(db, "vendors"), where("userId", "==", user.uid), where("name", "==", newVendorData.name));
       const querySnapshot = await getDocs(q);
       if (!querySnapshot.empty) {
@@ -190,7 +195,7 @@ export default function TripLedgerPage() {
         toast({
           title: "Vendor Exists",
           description: `Vendor "${newVendorData.name}" already exists.`,
-          variant: "destructive",
+          variant: "destructive", // Changed to destructive for more visual cue
         });
         return;
       }
@@ -198,6 +203,7 @@ export default function TripLedgerPage() {
       const vendorToSave = { ...newVendorData, userId: user.uid };
       const docRef = await addDoc(collection(db, "vendors"), vendorToSave);
       console.log("Vendor added with ID:", docRef.id);
+      // Add to local state and sort
       setVendors(prevVendors => [...prevVendors, { id: docRef.id, ...vendorToSave }].sort((a,b) => a.name.localeCompare(b.name)));
       toast({
         title: "Vendor Added",
@@ -206,8 +212,8 @@ export default function TripLedgerPage() {
     } catch (error: any) {
       console.error("Error adding vendor to Firestore. Full error object:", error);
       let description = "Could not save the vendor.";
-      if (error.code === 'permission-denied') {
-        description = "Permission denied. Please check Firestore security rules.";
+      if (error.code === 'permission-denied' || error.code === 'PERMISSION_DENIED') {
+        description = "Permission denied. Please check Firestore security rules for 'vendors' collection (create operation).";
       } else if (error.message) {
         description = `Error: ${error.message}`;
       }
@@ -226,6 +232,7 @@ export default function TripLedgerPage() {
     console.log("Attempting to delete vendor:", vendorToDelete.name, "ID:", vendorId);
 
     try {
+      // Check if vendor is associated with any expenses
       const expensesQuery = query(collection(db, "expenses"), where("userId", "==", user.uid), where("vendorName", "==", vendorToDelete.name));
       const expensesSnapshot = await getDocs(expensesQuery);
       if (!expensesSnapshot.empty) {
@@ -248,8 +255,8 @@ export default function TripLedgerPage() {
     } catch (error: any) {
       console.error("Error deleting vendor from Firestore. Full error object:", error);
       let description = "Could not remove the vendor.";
-      if (error.code === 'permission-denied') {
-        description = "Permission denied. Please check Firestore security rules.";
+      if (error.code === 'permission-denied' || error.code === 'PERMISSION_DENIED') {
+        description = "Permission denied. Please check Firestore security rules for 'vendors' collection (delete operation).";
       } else if (error.message) {
         description = `Error: ${error.message}`;
       }
@@ -262,6 +269,7 @@ export default function TripLedgerPage() {
   };
   
   const sortedUniqueVendorNames = useMemo(() => {
+    // This remains based on local state, which is fine as vendors state is updated from Firestore.
     return vendors.map(v => v.name).sort();
   }, [vendors]);
 
@@ -284,17 +292,29 @@ export default function TripLedgerPage() {
   }, [filteredExpenses]);
 
   const handlePrint = () => {
-    if (user) {
-      setPrintDate(format(new Date(), "PPPp"));
-      setTimeout(() => window.print(), 100);
+    if (user) { // Ensure user is logged in before printing
+      setPrintDate(format(new Date(), "PPPp")); // Format: Jun 2, 2024 at 3:30 PM
+      setTimeout(() => window.print(), 100); // Delay to allow state update for printDate
     }
   };
   
-  if (authLoading || (!user && !authLoading) || dataLoading) {
+  // Loading state for combined auth and initial data fetch
+  if (authLoading || (!user && !authLoading) || (user && dataLoading)) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-background to-secondary/30 p-4">
         <Briefcase className="h-16 w-16 text-primary animate-pulse" />
         <p className="mt-4 text-lg text-muted-foreground">Loading ProLedger...</p>
+      </div>
+    );
+  }
+
+  // If user is null after auth check (and not loading), they should have been redirected by useEffect.
+  // This state should ideally not be reached if redirection works, but it's a fallback.
+  if (!user) {
+     return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-background to-secondary/30 p-4">
+        <Briefcase className="h-16 w-16 text-primary" />
+        <p className="mt-4 text-lg text-muted-foreground">Redirecting to login...</p>
       </div>
     );
   }
@@ -340,6 +360,7 @@ export default function TripLedgerPage() {
       </header>
 
       <div className="max-w-6xl mx-auto space-y-8">
+        {/* Forms Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 no-print">
           <div className="lg:col-span-2 space-y-8">
             <Card className="shadow-lg">
@@ -419,6 +440,7 @@ export default function TripLedgerPage() {
         
         <Separator className="my-8 no-print" />
 
+        {/* Filters and Print Section */}
         <Card className="shadow-lg no-print">
           <CardHeader>
             <CardTitle className="flex items-center text-2xl">
@@ -437,8 +459,11 @@ export default function TripLedgerPage() {
           </CardContent>
         </Card>
         
+        {/* Printable Area: Summary and Table */}
         <div className="printable-area">
+           {/* Print Header */}
            <div className="print-header-logo hidden print:block">
+              {/* Simple SVG placeholder for logo - replace with your actual logo if needed */}
               <svg viewBox="0 0 24 24" className="mx-auto" style={{width: '80px', height: 'auto'}} fill="currentColor">
                 <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2ZM18 20H6V4H13V9H18V20Z" />
                 <path d="M8 14H16V12H8V14ZM8 18H13V16H8V18Z"/>
@@ -457,9 +482,10 @@ export default function TripLedgerPage() {
             totalPaid={summary.totalPaid}
             totalOutstanding={summary.totalOutstanding}
           />
-          <div className="mt-6">
+          <div className="mt-6"> {/* Spacing before the table */}
             <ExpenseTable expenses={filteredExpenses} onDeleteExpense={handleDeleteExpense} />
           </div>
+          {/* Print Footer */}
           <div className="print-footer hidden print:block">
             ProLedger - Your Professional Expense Tracking Solution
           </div>
