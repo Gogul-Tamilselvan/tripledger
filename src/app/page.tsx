@@ -12,7 +12,7 @@ import type { Expense, ExpenseData } from "@/types/expense";
 import type { Vendor, VendorData } from "@/types/vendor";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { db } from "@/lib/firebase"; // Import db
+import { db } from "@/lib/firebase";
 import { ExpenseForm } from "@/components/trip-ledger/ExpenseForm";
 import { VendorForm } from "@/components/trip-ledger/VendorForm";
 import { FilterControls } from "@/components/trip-ledger/FilterControls";
@@ -67,6 +67,7 @@ export default function TripLedgerPage() {
     if (user && !authLoading) {
       const fetchAllData = async () => {
         setDataLoading(true);
+        console.log("Attempting to fetch data for user:", user.uid);
         try {
           // Fetch Expenses
           const expensesQuery = query(collection(db, "expenses"), where("userId", "==", user.uid), orderBy("date", "desc"));
@@ -76,9 +77,10 @@ export default function TripLedgerPage() {
             return {
               id: doc.id,
               ...data,
-              date: (data.date as Timestamp).toDate(), // Convert Firestore Timestamp to JS Date
+              date: (data.date as Timestamp).toDate(),
             } as Expense;
           });
+          console.log("Fetched expenses:", fetchedExpenses);
           setExpenses(fetchedExpenses);
 
           // Fetch Vendors
@@ -88,13 +90,20 @@ export default function TripLedgerPage() {
             id: doc.id,
             ...doc.data(),
           } as Vendor));
+          console.log("Fetched vendors:", fetchedVendors);
           setVendors(fetchedVendors);
 
-        } catch (error) {
-          console.error("Error fetching data from Firestore:", error);
+        } catch (error: any) {
+          console.error("Error fetching data from Firestore. Full error object:", error);
+          let description = "Could not fetch records from the database.";
+          if (error.code === 'permission-denied') {
+            description = "Permission denied. Please check Firestore security rules and ensure they are published.";
+          } else if (error.message) {
+            description = `Error: ${error.message}`;
+          }
           toast({
             title: "Error Loading Data",
-            description: "Could not fetch records from the database.",
+            description: description,
             variant: "destructive",
           });
         } finally {
@@ -103,7 +112,6 @@ export default function TripLedgerPage() {
       };
       fetchAllData();
     } else if (!authLoading && !user) {
-      // Clear data if user logs out
       setExpenses([]);
       setVendors([]);
       setDataLoading(false);
@@ -113,24 +121,32 @@ export default function TripLedgerPage() {
 
   const handleAddExpense = async (newExpenseData: ExpenseData) => {
     if (!user) return;
+    console.log("Attempting to add expense:", newExpenseData);
     try {
       const expenseToSave = {
         ...newExpenseData,
         userId: user.uid,
-        date: Timestamp.fromDate(newExpenseData.date), // Convert JS Date to Firestore Timestamp
+        date: Timestamp.fromDate(newExpenseData.date),
         outstandingBalance: newExpenseData.totalAmountOwed - newExpenseData.amountPaid,
       };
       const docRef = await addDoc(collection(db, "expenses"), expenseToSave);
+      console.log("Expense added with ID:", docRef.id);
       setExpenses(prevExpenses => [{ id: docRef.id, ...expenseToSave, date: newExpenseData.date } as Expense, ...prevExpenses].sort((a,b) => (b.date as Date).getTime() - (a.date as Date).getTime()));
       toast({
         title: "Expense Added",
         description: `${newExpenseData.vendorName} expense recorded successfully.`,
       });
-    } catch (error) {
-      console.error("Error adding expense to Firestore:", error);
+    } catch (error: any) {
+      console.error("Error adding expense to Firestore. Full error object:", error);
+      let description = "Could not save the expense.";
+      if (error.code === 'permission-denied') {
+        description = "Permission denied. Please check Firestore security rules.";
+      } else if (error.message) {
+        description = `Error: ${error.message}`;
+      }
       toast({
         title: "Error Adding Expense",
-        description: "Could not save the expense.",
+        description: description,
         variant: "destructive",
       });
     }
@@ -138,18 +154,26 @@ export default function TripLedgerPage() {
 
   const handleDeleteExpense = async (expenseId: string) => {
     if (!user) return;
+    console.log("Attempting to delete expense with ID:", expenseId);
     try {
       await deleteDoc(doc(db, "expenses", expenseId));
+      console.log("Expense deleted successfully:", expenseId);
       setExpenses(prevExpenses => prevExpenses.filter(exp => exp.id !== expenseId));
       toast({
         title: "Expense Deleted",
         description: "The expense record has been removed.",
       });
-    } catch (error) {
-      console.error("Error deleting expense from Firestore:", error);
+    } catch (error: any) {
+      console.error("Error deleting expense from Firestore. Full error object:", error);
+      let description = "Could not remove the expense.";
+       if (error.code === 'permission-denied') {
+        description = "Permission denied. Please check Firestore security rules.";
+      } else if (error.message) {
+        description = `Error: ${error.message}`;
+      }
       toast({
         title: "Error Deleting Expense",
-        description: "Could not remove the expense.",
+        description: description,
         variant: "destructive",
       });
     }
@@ -157,11 +181,12 @@ export default function TripLedgerPage() {
 
   const handleAddVendor = async (newVendorData: VendorData) => {
     if (!user) return;
+    console.log("Attempting to add vendor:", newVendorData);
     try {
-      // Check if vendor already exists for this user
       const q = query(collection(db, "vendors"), where("userId", "==", user.uid), where("name", "==", newVendorData.name));
       const querySnapshot = await getDocs(q);
       if (!querySnapshot.empty) {
+        console.log("Vendor already exists:", newVendorData.name);
         toast({
           title: "Vendor Exists",
           description: `Vendor "${newVendorData.name}" already exists.`,
@@ -172,16 +197,23 @@ export default function TripLedgerPage() {
 
       const vendorToSave = { ...newVendorData, userId: user.uid };
       const docRef = await addDoc(collection(db, "vendors"), vendorToSave);
+      console.log("Vendor added with ID:", docRef.id);
       setVendors(prevVendors => [...prevVendors, { id: docRef.id, ...vendorToSave }].sort((a,b) => a.name.localeCompare(b.name)));
       toast({
         title: "Vendor Added",
         description: `Vendor "${newVendorData.name}" has been successfully added.`,
       });
-    } catch (error) {
-      console.error("Error adding vendor to Firestore:", error);
+    } catch (error: any) {
+      console.error("Error adding vendor to Firestore. Full error object:", error);
+      let description = "Could not save the vendor.";
+      if (error.code === 'permission-denied') {
+        description = "Permission denied. Please check Firestore security rules.";
+      } else if (error.message) {
+        description = `Error: ${error.message}`;
+      }
       toast({
         title: "Error Adding Vendor",
-        description: "Could not save the vendor.",
+        description: description,
         variant: "destructive",
       });
     }
@@ -191,12 +223,13 @@ export default function TripLedgerPage() {
     if (!user) return;
     const vendorToDelete = vendors.find(v => v.id === vendorId);
     if (!vendorToDelete) return;
+    console.log("Attempting to delete vendor:", vendorToDelete.name, "ID:", vendorId);
 
     try {
-      // Check if vendor is used in any expenses for this user
       const expensesQuery = query(collection(db, "expenses"), where("userId", "==", user.uid), where("vendorName", "==", vendorToDelete.name));
       const expensesSnapshot = await getDocs(expensesQuery);
       if (!expensesSnapshot.empty) {
+        console.log("Deletion prevented for vendor:", vendorToDelete.name, "Reason: Associated with expenses.");
         toast({
           title: "Deletion Prevented",
           description: `Vendor "${vendorToDelete.name}" cannot be deleted as it is associated with existing expenses.`,
@@ -206,16 +239,23 @@ export default function TripLedgerPage() {
       }
 
       await deleteDoc(doc(db, "vendors", vendorId));
+      console.log("Vendor deleted successfully:", vendorToDelete.name);
       setVendors(prevVendors => prevVendors.filter(v => v.id !== vendorId));
       toast({
         title: "Vendor Deleted",
         description: `Vendor "${vendorToDelete.name}" has been removed.`,
       });
-    } catch (error) {
-      console.error("Error deleting vendor from Firestore:", error);
+    } catch (error: any) {
+      console.error("Error deleting vendor from Firestore. Full error object:", error);
+      let description = "Could not remove the vendor.";
+      if (error.code === 'permission-denied') {
+        description = "Permission denied. Please check Firestore security rules.";
+      } else if (error.message) {
+        description = `Error: ${error.message}`;
+      }
       toast({
         title: "Error Deleting Vendor",
-        description: "Could not remove the vendor.",
+        description: description,
         variant: "destructive",
       });
     }
@@ -250,7 +290,7 @@ export default function TripLedgerPage() {
     }
   };
   
-  if (authLoading || (!user && !authLoading) || dataLoading) { // Show loading if auth is pending, user not logged in yet or data is loading
+  if (authLoading || (!user && !authLoading) || dataLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-background to-secondary/30 p-4">
         <Briefcase className="h-16 w-16 text-primary animate-pulse" />
@@ -259,7 +299,6 @@ export default function TripLedgerPage() {
     );
   }
 
-  // Main content once authenticated and data loaded
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-secondary/30 p-4 md:p-8">
       <header className="mb-10 text-center no-print">
@@ -429,3 +468,5 @@ export default function TripLedgerPage() {
     </div>
   );
 }
+
+    
