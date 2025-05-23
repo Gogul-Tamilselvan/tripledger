@@ -108,9 +108,11 @@ export default function TripLedgerPage() {
 
     } catch (error: any) {
       console.error("Error fetching data from Firestore. Full error object:", error);
-      let description = "Could not fetch records from the database.";
+      let description = "Could not fetch records. Please check your internet connection.";
       if (error.code === 'permission-denied' || error.code === 'PERMISSION_DENIED') {
-        description = "Permission denied. Please check Firestore security rules and ensure they allow read operations for your data.";
+        description = "Permission denied. Please check Firestore security rules.";
+      } else if (error.message && error.message.toLowerCase().includes("index")) {
+        description = "Firestore query requires an index. Please check the browser's developer console for a link to create the missing index in Firebase.";
       } else if (error.message) {
         description = `Error: ${error.message}`;
       }
@@ -119,7 +121,7 @@ export default function TripLedgerPage() {
         description: description,
         variant: "destructive",
       });
-      setExpenses([]); // Clear data on error to avoid showing stale/incorrect data
+      setExpenses([]); 
       setVendors([]);
     } finally {
       setDataLoading(false);
@@ -237,6 +239,8 @@ export default function TripLedgerPage() {
       let description = "Could not save the vendor.";
       if (error.code === 'permission-denied' || error.code === 'PERMISSION_DENIED') {
         description = "Permission denied. Please check Firestore security rules for 'vendors' collection (create operation).";
+      } else if (error.message && error.message.toLowerCase().includes("index")) {
+        description = "Firestore query requires an index. Please check the browser's developer console for a link to create the missing index in Firebase.";
       } else if (error.message) {
         description = `Error: ${error.message}`;
       }
@@ -283,6 +287,8 @@ export default function TripLedgerPage() {
       let description = "Could not remove the vendor.";
       if (error.code === 'permission-denied' || error.code === 'PERMISSION_DENIED') {
         description = "Permission denied. Please check Firestore security rules for 'vendors' collection (delete operation).";
+      } else if (error.message && error.message.toLowerCase().includes("index")) {
+        description = "Firestore query requires an index. Please check the browser's developer console for a link to create the missing index in Firebase.";
       } else if (error.message) {
         description = `Error: ${error.message}`;
       }
@@ -335,6 +341,9 @@ export default function TripLedgerPage() {
 
   if (!user && !authLoading) { 
      console.log("Redirecting to login (fallback)...");
+     // router.push should be handled by the effect, but this is a safeguard.
+     // It might be better to return a dedicated "Redirecting to login..." component
+     // or even null if the redirect is expected to be very fast.
      return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-background to-secondary/30 p-4">
         <Briefcase className="h-16 w-16 text-primary" />
@@ -343,17 +352,19 @@ export default function TripLedgerPage() {
     );
   }
   
-  if (!user) return null; 
+  if (!user) return null; // Should be covered by above, but good failsafe
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-secondary/30 p-4 md:p-8">
       <header className="mb-10 text-center no-print">
         <div className="flex justify-between items-center">
+            {/* Placeholder for potential left-aligned items like a back button or logo */}
             <div></div> 
             <div className="inline-flex items-center bg-card shadow-md rounded-lg p-3">
               <Briefcase className="h-10 w-10 text-primary mr-3" />
               <h1 className="text-4xl font-bold tracking-tight text-foreground">ProLedger</h1>
             </div>
+            {/* User avatar and dropdown menu */}
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-10 w-10 rounded-full">
@@ -386,6 +397,7 @@ export default function TripLedgerPage() {
       </header>
 
       <div className="max-w-6xl mx-auto space-y-8">
+        {/* Expense Form and Vendor Management Side-by-Side */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 no-print">
           <div className="lg:col-span-2 space-y-8">
             <Card className="shadow-lg">
@@ -465,6 +477,7 @@ export default function TripLedgerPage() {
         
         <Separator className="my-8 no-print" />
 
+        {/* Filter Controls */}
         <Card className="shadow-lg no-print">
           <CardHeader>
             <CardTitle className="flex items-center text-2xl">
@@ -483,8 +496,11 @@ export default function TripLedgerPage() {
           </CardContent>
         </Card>
         
+        {/* Printable Area for Expense Summary and Table */}
         <div className="printable-area">
+           {/* Print-specific header */}
            <div className="print-header-logo hidden print:block">
+              {/* Basic SVG document icon - replace with your actual logo if you have one */}
               <svg viewBox="0 0 24 24" className="mx-auto" style={{width: '80px', height: 'auto'}} fill="currentColor">
                 <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2ZM18 20H6V4H13V9H18V20Z" />
                 <path d="M8 14H16V12H8V14ZM8 18H13V16H8V18Z"/>
@@ -514,3 +530,4 @@ export default function TripLedgerPage() {
     </div>
   );
 }
+
